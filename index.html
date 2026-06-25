@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#C41E3A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="贵阳攻略">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="manifest" href="/manifest.json">
+<title>贵阳四日旅行攻略 · 7.2-7.5</title>
+<style>
+:root {
+  --red: #C41E3A;
+  --red-light: #FDE8EC;
+  --bg: #FFF8F0;
+  --surface: #FFFFFF;
+  --text: #2D2D2D;
+  --subtext: #6B6B6B;
+  --border: #E8DDD4;
+  --shadow: 0 2px 8px rgba(0,0,0,0.06);
+  --radius: 12px;
+  --nav-height: 56px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.6;
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Header */
+.app-header {
+  background: var(--red);
+  color: #fff;
+  padding: 12px 16px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.app-header h1 { font-size: 17px; font-weight: 600; }
+.app-header .subtitle { font-size: 12px; opacity: 0.85; }
+
+/* Tab Nav */
+.tab-nav {
+  display: flex;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: var(--nav-height);
+  z-index: 999;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.tab-nav button {
+  flex: 1 0 auto;
+  min-width: 25%;
+  padding: 12px 8px;
+  border: none;
+  background: none;
+  font-size: 13px;
+  color: var(--subtext);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.tab-nav button.active {
+  color: var(--red);
+  border-bottom-color: var(--red);
+  font-weight: 600;
+}
+.tab-nav button .day-theme { font-size: 10px; display: block; opacity: 0.7; }
+
+/* Content sections */
+.content { padding: 12px 16px 80px; }
+.day-panel { display: none; }
+.day-panel.active { display: block; }
+
+/* Cards */
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+}
+.card h3 { font-size: 15px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+
+/* Timeline */
+.timeline-item {
+  display: flex;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.timeline-item:last-child { border-bottom: none; }
+.timeline-time {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--red);
+  min-width: 52px;
+  text-align: right;
+}
+.timeline-body { flex: 1; font-size: 14px; }
+.timeline-note { font-size: 12px; color: var(--subtext); margin-top: 2px; }
+
+/* Badge */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.badge-danger { background: #FEE2E2; color: #B91C1C; }
+.badge-warn { background: #FEF3C7; color: #92400E; }
+.badge-must { background: var(--red-light); color: var(--red); }
+.badge-pick { background: #EDE9FE; color: #6D28D9; }
+.badge-backup { background: #F3F4F6; color: #6B7280; }
+
+/* Risk alert */
+.risk-alert {
+  background: #FEF3C7;
+  border-left: 3px solid #F59E0B;
+  padding: 10px 12px;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  font-size: 13px;
+  margin-top: 8px;
+}
+.risk-alert.risk-danger {
+  background: #FEE2E2;
+  border-left-color: #DC2626;
+}
+
+
+/* Filter chips */
+.filter-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 10px 0;
+}
+.filter-chip {
+  padding: 6px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.filter-chip.active {
+  background: var(--red);
+  color: #fff;
+  border-color: var(--red);
+}
+
+/* Food row */
+.food-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.food-row:last-child { border-bottom: none; }
+.food-row-link {
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.15s;
+  margin: 0 -14px;
+  padding-left: 14px;
+  padding-right: 14px;
+  border-radius: 8px;
+}
+.food-row-link:active {
+  background: var(--red-light);
+}
+.food-name { font-weight: 600; font-size: 14px; }
+.food-detail { font-size: 12px; color: var(--subtext); }
+.food-area { font-size: 11px; color: var(--subtext); background: var(--bg); padding: 2px 8px; border-radius: 8px; white-space: nowrap; flex-shrink: 0; margin-left: 8px; }
+
+/* Collapsible */
+.collapse-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 12px 0;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  background: none;
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+}
+.collapse-header::after { content: "▾"; transition: transform 0.3s; font-size: 12px; }
+.collapse-header.open::after { transform: rotate(180deg); }
+.collapse-body { display: none; padding: 10px 0; }
+.collapse-body.open { display: block; }
+
+/* Emergency plan items */
+.emergency-item {
+  display: flex;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.emergency-item:last-child { border-bottom: none; }
+.emergency-cause {
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 120px;
+  color: var(--red);
+}
+.emergency-fix { font-size: 13px; }
+
+/* Photo tip */
+.photo-tip {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-bottom: 10px;
+  box-shadow: var(--shadow);
+}
+.photo-tip h4 { font-size: 14px; margin-bottom: 6px; }
+.photo-tip ul { padding-left: 18px; font-size: 13px; }
+.photo-tip ul li { margin-bottom: 4px; }
+
+/* Bottom safe area */
+.bottom-spacer { height: 60px; }
+
+/* Nav button — opens native map app */
+.nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text);
+  text-align: left;
+  transition: all 0.15s;
+  margin-bottom: 8px;
+  text-decoration: none;
+}
+.nav-btn:active {
+  background: var(--red-light);
+  border-color: var(--red);
+}
+.nav-btn .nav-icon {
+  font-size: 18px;
+  width: 28px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.nav-btn .nav-label {
+  flex: 1;
+  margin: 0 10px;
+}
+.nav-btn .nav-label small {
+  display: block;
+  font-size: 11px;
+  color: var(--subtext);
+  font-weight: 400;
+}
+.nav-btn .nav-arrow {
+  color: var(--red);
+  font-size: 16px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.nav-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--subtext);
+  margin: 12px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.nav-section-title:first-child { margin-top: 0; }
+
+/* Safe area for notched phones */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .app-header { padding-top: calc(12px + env(safe-area-inset-top)); }
+  .bottom-spacer { padding-bottom: env(safe-area-inset-bottom); }
+}
+@media (min-width: 768px) {
+  body { max-width: 720px; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div>
+    <h1>🏙️ 贵阳四日旅行攻略</h1>
+    <div class="subtitle">2026.7.2 — 7.5 · 喷水池/大十字住宿</div>
+  </div>
+</div>
+
+<nav class="tab-nav" id="tabNav">
+  <button data-day="day1" class="active">🌙 7/2<span class="day-theme">抵达+夜宵</span></button>
+  <button data-day="day2">🌊 7/3<span class="day-theme">荔波小七孔</span></button>
+  <button data-day="day3">🎵 7/4<span class="day-theme">美食+演唱会</span></button>
+  <button data-day="day4">💦 7/5<span class="day-theme">黄果树+返程</span></button>
+</nav>
+
+<div class="card" style="margin:12px 16px;">
+  <h3>🗺️ 一键导航 <span style="font-size:12px;color:var(--subtext);font-weight:400;">— 点一下打开地图App</span></h3>
+  <div id="navLinks"></div>
+  <p style="font-size:11px;color:var(--subtext);text-align:center;margin-top:8px;">
+    📱 自动检测手机类型 · 已装高德则打开高德 · 否则打开Apple/Google地图
+  </p>
+</div>
+
+<div class="content" id="content">
+  <!-- Day panels rendered by JS -->
+</div>
+
+<div class="card" style="margin:0 16px 12px;">
+  <h3>🏨 住宿：喷水池 / 大十字区域</h3>
+  <p style="font-size:13px;color:var(--subtext);margin-bottom:8px;">三晚不换酒店 · 约150-200元/晚</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;">
+    <div>✅ 步行民生路 <strong>5min</strong></div>
+    <div>✅ 步行蔡家街 <strong>7min</strong></div>
+    <div>✅ 步行护国路 <strong>12min</strong></div>
+    <div>✅ 地铁到奥体 <strong>30min</strong></div>
+    <div>✅ 打车到北站 <strong>20min</strong></div>
+    <div>✅ 机场打车 <strong>25min</strong></div>
+  </div>
+</div>
+
+<div class="card" style="margin:0 16px 12px;" id="foodPanel">
+  <h3>🍜 完整美食清单 <span style="font-size:12px;color:var(--subtext);font-weight:400;">（39家）</span></h3>
+  <div class="filter-row" id="foodFilters">
+    <button class="filter-chip active" data-filter="all">全部</button>
+    <button class="filter-chip badge-must" data-filter="must">🥇 必吃</button>
+    <button class="filter-chip badge-pick" data-filter="pick">🥈 精选</button>
+    <button class="filter-chip badge-backup" data-filter="backup">🥉 备选</button>
+    <button class="filter-chip" data-filter="minsheng">民生路片区</button>
+    <button class="filter-chip" data-filter="huguo">护国路片区</button>
+    <button class="filter-chip" data-filter="penshuichi">喷水池片区</button>
+    <button class="filter-chip" data-filter="youyi">友谊路/虎门巷</button>
+  </div>
+  <div id="foodList"></div>
+</div>
+
+<div class="card" style="margin:0 16px 12px;">
+  <button class="collapse-header" id="emergencyToggle">
+    <h3>🔄 应急预案</h3>
+  </button>
+  <div class="collapse-body" id="emergencyBody">
+    <div class="emergency-item">
+      <div class="emergency-cause">🌧️ 7/3 暴雨<br>景区关闭</div>
+      <div class="emergency-fix">改 7/4 去荔波（取消美食扫街），黄果树改 7/5 半天速通。若 7/4 也无法成行，全部改为贵阳市区深度美食游。</div>
+    </div>
+    <div class="emergency-item">
+      <div class="emergency-cause">🚄 误了荔波<br>回程高铁</div>
+      <div class="emergency-fix">荔波县城住一晚（约150元），明早首班高铁回贵阳，直接去奥体中心（放弃 7/4 白天美食扫街）。</div>
+    </div>
+    <div class="emergency-item">
+      <div class="emergency-cause">💦 7/5 黄果树<br>回来晚了</div>
+      <div class="emergency-fix">放弃取行李，直接从贵阳北站打车去龙洞堡机场。行李联系酒店顺丰寄回太原。</div>
+    </div>
+    <div class="emergency-item">
+      <div class="emergency-cause">🍜 目标店<br>排队太长</div>
+      <div class="emergency-fix">切换到同片区备选级店铺。每片区至少 3-5 家备选，不会没得吃。</div>
+    </div>
+    <div class="emergency-item">
+      <div class="emergency-cause">🎤 演唱会<br>延期/取消</div>
+      <div class="emergency-fix">7/4 晚改为花果园+金顶山片区深度夜宵游：何眼镜香辣蟹、金顶山小耳朵清水烫、丫头烤肉、大头烤鸡。</div>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin:0 16px 12px;">
+  <button class="collapse-header" id="photoToggle">
+    <h3>📸 拍照攻略</h3>
+  </div>
+  <div class="collapse-body" id="photoBody">
+    <div class="photo-tip">
+      <h4>🌊 荔波小七孔（风光）</h4>
+      <ul>
+        <li>① 小七孔古桥：桥下石阶低角度拍桥+倒影</li>
+        <li>② 拉雅瀑布：广角近距离拍水雾层次</li>
+        <li>③ 水上森林：慢快门拍流水丝绸感（带ND镜/CPL）</li>
+        <li>④ 卧龙潭：最佳碧水机位，高处俯拍全景</li>
+        <li>⚠️ 暑假+正午硬光，优先古桥和卧龙潭，轻装一机一镜（24-70或广变）</li>
+      </ul>
+    </div>
+    <div class="photo-tip">
+      <h4>💦 黄果树瀑布（风光）</h4>
+      <ul>
+        <li>① 大瀑布正面：经典视角，带防水罩！水雾巨大</li>
+        <li>② 水帘洞：洞中透视瀑布，独特视角</li>
+        <li>③ 天星桥银链坠潭：流水层次最丰富</li>
+        <li>④ 陡坡塘：宽幅瀑布，西游记取景地</li>
+      </ul>
+    </div>
+    <div class="photo-tip">
+      <h4>🏙️ 贵阳美食街（人文街拍）</h4>
+      <ul>
+        <li>民生路+正新街：上午 9-11 点，光线斜射，摊位全开</li>
+        <li>护国路：傍晚，夜市气氛开始上来</li>
+        <li>虎门巷+友谊路：深夜，烟火气最浓</li>
+        <li>推荐 35mm/50mm 定焦，拍食物用侧光/逆光突出油润质感</li>
+        <li>摊主入镜先微笑打招呼</li>
+        <li>蔡家街+护国路各有老巷子，适合拍贵阳老城肌理</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-spacer"></div>
+<div style="text-align:center;padding:16px;font-size:11px;color:var(--subtext);">
+  🏙️ 贵阳 2026.7.2-7.5 · 祝旅途愉快！
+</div>
+
+<script>
+// === DATA ===
+const itinerary = {
+  day1: {
+    date: "7月2日 周三", theme: "抵达 + 夜宵", emoji: "🌙",
+    timeline: [
+      { time: "18:55", event: "✈️ 太原起飞", note: "" },
+      { time: "21:30", event: "🛬 到达贵阳龙洞堡机场", note: "取行李 15-20min" },
+      { time: "21:50", event: "🚕 打车前往喷水池", note: "机场→喷水池约25min，约40元" },
+      { time: "22:15", event: "🏨 办理入住，放行李", note: "喷水池/大十字区域" },
+      { time: "22:30", event: "🍢 民生路+正新街夜宵", note: "步行即达，部分摊位可能收摊" }
+    ],
+    foodHighlights: [
+      { name: "徐家优选脆哨 / 丁家脆哨", area: "民生路", note: "买些路上吃，如已关门明早补" },
+      { name: "余孃洋芋粑", area: "民生路+正新街", note: "趁热吃" },
+      { name: "但家香酥鸭", area: "民生路", note: "可打包回酒店" },
+      { name: "董记鬼扯手", area: "民生路", note: "甜辣土豆片（备选）" },
+      { name: "骆玉冰浆", area: "民生路", note: "冰浆消暑（备选）" }
+    ],
+    risks: [{ level: "warn", text: "部分摊位22:30后收摊，能吃到几家算几家" }]
+  },
+  day2: {
+    date: "7月3日 周四", theme: "荔波小七孔 · 极限日归", emoji: "🌊",
+    timeline: [
+      { time: "06:00", event: "🚿 起床", note: "轻装出发，行李留酒店" },
+      { time: "06:30", event: "🥡 早餐", note: "金牌罗记肠旺面（蔡家街7:00开门）/ 俞记安顺破酥包" },
+      { time: "07:00", event: "🚕 打车到贵阳北站", note: "20min，约30元" },
+      { time: "07:40", event: "🚄 贵阳北 → 荔波", note: "高铁约1h30m，提前3-5天购票！" },
+      { time: "09:10", event: "🚕 荔波站 → 小七孔景区", note: "打车15min" },
+      { time: "09:30", event: "📸 小七孔景区（东进西出）", note: "古桥→拉雅瀑布→水上森林→卧龙潭" },
+      { time: "12:30", event: "🍱 景区内午餐", note: "自带干粮+脆哨" },
+      { time: "13:00", event: "📸 继续拍摄", note: "卧龙潭碧水全景" },
+      { time: "16:00", event: "🚕 出景区 → 荔波站", note: "" },
+      { time: "16:50", event: "🚄 荔波 → 贵阳北", note: "高铁约1h30m" },
+      { time: "18:20", event: "🚕 贵阳北 → 喷水池", note: "打车20min" },
+      { time: "18:45", event: "🍲 护国路晚餐", note: "毛辣果虾酸牛肉 / 胡子哥酸汤牛肉 + 织金土烙锅" },
+      { time: "20:30", event: "🍰 甜品时间", note: "王旭甜品（水果豆花必点！）+ 小舒冰浆" },
+      { time: "21:30", event: "🏨 回酒店休息", note: "一天奔波近4h高铁，早点歇" }
+    ],
+    foodHighlights: [
+      { name: "金牌罗记肠旺面", area: "蔡家街", note: "贵阳早餐之王，7:00开门" },
+      { name: "毛辣果虾酸牛肉", area: "护国路", note: "独山特色，贵阳少见" },
+      { name: "织金土烙锅", area: "护国路", note: "毛辣果旁边，一次吃两家" },
+      { name: "王旭甜品", area: "护国路", note: "水果豆花必点！！！" },
+      { name: "小舒冰浆", area: "护国路", note: "饭后消暑" }
+    ],
+    risks: [
+      { level: "danger", text: "暑假荔波高铁票热门，必须提前3-5天购票！" },
+      { level: "warn", text: "往返高铁共约3h在路上，带上充电宝和零食" }
+    ]
+  },
+  day3: {
+    date: "7月4日 周五", theme: "美食扫街 + 演唱会", emoji: "🎵",
+    timeline: [
+      { time: "07:30", event: "🚿 起床", note: "" },
+      { time: "08:00", event: "🍳 蔡家街早餐", note: "忆苗乡老酸汤砂锅粉 / 董家红油米皮" },
+      { time: "09:00", event: "📸 扫街开始", note: "民生路→蔡家街→省府路，白天街拍+吃一路" },
+      { time: "11:00", event: "🍜 省府路早午餐", note: "小平香辣素粉" },
+      { time: "11:30", event: "🚶 步行至文昌路", note: "约10min" },
+      { time: "12:00", event: "🍲 文昌路午餐", note: "腾福记大方豆干火锅 / 三姨孃爆炒三肠" },
+      { time: "13:30", event: "🚶 步行至护国路", note: "边走边拍" },
+      { time: "14:00", event: "🍰 护国路下午茶", note: "巧八角冰浆 / 水果豆花 / 丁家脆哨补货" },
+      { time: "15:00", event: "🍢 大南门片区", note: "林城雷家豆腐圆子、良诚吉肆灌汤猪脚" },
+      { time: "16:00", event: "🍲 早晚饭", note: "黔诚酸汤牛肉（大南门）" },
+      { time: "17:30", event: "🚇 地铁出发去奥体", note: "喷水池→观山湖公园站，约30min" },
+      { time: "18:00", event: "🏟️ 到达奥体中心", note: "预留1.5h缓冲，安全！" },
+      { time: "19:30", event: "🎤 演唱会！！！", note: "" },
+      { time: "21:30", event: "🎉 演唱会结束", note: "" },
+      { time: "22:00", event: "🚕 打车回虎门巷/友谊路", note: "深夜烧烤之旅！" }
+    ],
+    foodHighlights: [
+      { name: "忆苗乡老酸汤", area: "蔡家街", note: "酸汤砂锅粉，开胃醒神" },
+      { name: "小平香辣素粉", area: "省府路", note: "" },
+      { name: "腾福记大方豆干火锅", area: "文昌路", note: "" },
+      { name: "黔诚酸汤牛肉", area: "大南门", note: "" },
+      { name: "烧包烧烤店", area: "虎门巷", note: "7/4演唱会后的深夜烧烤！" },
+      { name: "葫芦烤鸡 / 鸡鸣三生上树烤鸡", area: "友谊路", note: "深夜烤鸡二选一" },
+      { name: "巴倒烫烤鱼", area: "陕西路", note: "" },
+      { name: "虎门巷高坎坎烤肉", area: "虎门巷", note: "备选" }
+    ],
+    risks: [
+      { level: "warn", text: "17:30必须离开市中心，地铁30min+步行缓冲，不可再晚" }
+    ]
+  },
+  day4: {
+    date: "7月5日 周六", theme: "黄果树瀑布 + 赶飞机", emoji: "💦",
+    timeline: [
+      { time: "06:00", event: "🚿 起床", note: "" },
+      { time: "06:30", event: "🏨 退房", note: "行李暂存酒店或带到贵阳北站寄存" },
+      { time: "06:45", event: "🥡 快捷早餐", note: "六广门毛阿姨糯米饭（打包带走）" },
+      { time: "07:15", event: "🚕 打车到贵阳北站", note: "20min" },
+      { time: "08:00", event: "🚄 贵阳北 → 安顺西", note: "高铁30min！" },
+      { time: "08:30", event: "🚌 安顺西 → 黄果树景区", note: "大巴40min" },
+      { time: "09:15", event: "📸 黄果树景区", note: "大瀑布40min → 天星桥1.5h → 陡坡塘40min" },
+      { time: "12:30", event: "🍱 景区简餐", note: "或景区外安顺小吃" },
+      { time: "13:30", event: "🔴 必须离开景区！", note: "硬性截止时间，无论拍没拍完" },
+      { time: "14:20", event: "🚄 安顺西 → 贵阳北", note: "高铁30min" },
+      { time: "14:50", event: "🧳 贵阳北取行李", note: "如行李存酒店多留20min" },
+      { time: "15:20", event: "🍲 最后的贵阳美食", note: "新大新豆米火锅 / 丝恋丝娃娃 / 永笠板筋饭" },
+      { time: "17:30", event: "🚕 出发去机场", note: "务必留足时间！" },
+      { time: "18:00", event: "🛬 到达龙洞堡机场", note: "提前90min到达" },
+      { time: "21:05", event: "✈️ 起飞回太原", note: "再见贵阳！👋" }
+    ],
+    foodHighlights: [
+      { name: "六广门毛阿姨糯米饭", area: "八鸽岩路", note: "打包当早餐干粮" },
+      { name: "新大新豆米火锅", area: "喷水池", note: "离开前最后一顿大餐" },
+      { name: "丝恋丝娃娃", area: "喷水池国贸广场", note: "贵阳名片" },
+      { name: "永笠板筋饭", area: "喷水池太平路", note: "备选" },
+      { name: "社会牛肉粉", area: "喷水池", note: "备选" }
+    ],
+    risks: [
+      { level: "danger", text: "🔴 13:30是硬性截止时间！堵车或延误则放弃取行李，直接从贵阳北去机场，行李寄回太原！" }
+    ]
+  }
+};
+
+// === MAP DATA ===
+// 片区坐标（用于导航）
+const areaCoords = {
+  "minsheng":    { lat: 26.5825, lng: 106.7135, label: "民生路+正新街", icon: "food" },
+  "caijia":      { lat: 26.5818, lng: 106.7148, label: "蔡家街", icon: "food" },
+  "huguo":       { lat: 26.5750, lng: 106.7170, label: "护国路", icon: "food" },
+  "wenchang":    { lat: 26.5790, lng: 106.7180, label: "文昌路", icon: "food" },
+  "dananmen":    { lat: 26.5735, lng: 106.7150, label: "大南门", icon: "food" },
+  "youyi":       { lat: 26.5870, lng: 106.7120, label: "友谊路+虎门巷", icon: "food" },
+  "humen":       { lat: 26.5855, lng: 106.7130, label: "虎门巷", icon: "food" },
+  "shanxi":      { lat: 26.5860, lng: 106.7110, label: "陕西路", icon: "food" },
+  "penshuichi":  { lat: 26.5840, lng: 106.7105, label: "喷水池", icon: "hotel" },
+  "taiping":     { lat: 26.5835, lng: 106.7095, label: "喷水池太平路", icon: "food" },
+  "guomao":      { lat: 26.5830, lng: 106.7115, label: "喷水池国贸广场", icon: "food" },
+  "baggeyan":    { lat: 26.5920, lng: 106.7050, label: "八鸽岩路", icon: "food" },
+  "shengfu":     { lat: 26.5810, lng: 106.7150, label: "省府路", icon: "food" },
+  "qianling":    { lat: 26.5880, lng: 106.7100, label: "黔灵东路", icon: "food" },
+  "feishan":     { lat: 26.5820, lng: 106.7065, label: "飞山街", icon: "food" },
+  "huaguoyuan":  { lat: 26.5670, lng: 106.6980, label: "花果园", icon: "food" },
+  // 交通节点
+  "airport":     { lat: 26.5385, lng: 106.8010, label: "龙洞堡机场", icon: "transport" },
+  "guiyangbei":  { lat: 26.6200, lng: 106.6720, label: "贵阳北站", icon: "transport" },
+  "aoti":        { lat: 26.6200, lng: 106.6280, label: "奥体中心(演唱会)", icon: "venue" },
+  // 景区
+  "huangguoshu": { lat: 25.9930, lng: 105.6690, label: "黄果树瀑布", icon: "scenic" },
+  "xiaoqikong":  { lat: 25.2980, lng: 107.7090, label: "荔波小七孔", icon: "scenic" }
+};
+
+// 美食 area 字符串 → coord key 映射
+function getFoodCoordKey(area) {
+  if (area.includes('正新街') || area === '民生路') return 'minsheng';
+  if (area.includes('虎门巷')) return 'humen';
+  if (area.includes('陕西路')) return 'shanxi';
+  if (area.includes('太平路')) return 'taiping';
+  if (area.includes('国贸')) return 'guomao';
+  if (area.includes('喷水池')) return 'penshuichi';
+  if (area.includes('护国路')) return 'huguo';
+  if (area.includes('蔡家街')) return 'caijia';
+  if (area.includes('大南门')) return 'dananmen';
+  if (area.includes('文昌路')) return 'wenchang';
+  if (area.includes('友谊路')) return 'youyi';
+  if (area.includes('省府路')) return 'shengfu';
+  if (area.includes('八鸽岩路')) return 'baggeyan';
+  if (area.includes('黔灵东路')) return 'qianling';
+  if (area.includes('飞山街')) return 'feishan';
+  return 'penshuichi'; // fallback
+}
+
+// 每日相关点位
+const dayPoints = {
+  day1: ["minsheng", "caijia", "penshuichi", "airport"],
+  day2: ["xiaoqikong", "guiyangbei", "penshuichi", "huguo"],
+  day3: ["minsheng", "caijia", "wenchang", "huguo", "dananmen", "aoti", "youyi"],
+  day4: ["huangguoshu", "guiyangbei", "airport", "penshuichi", "baggeyan"]
+};
+
+// === FOOD DATA ===
+// priority: "must" | "pick" | "backup"
+// 每家店的 lat/lng 基于实际地址，同街店铺微调偏移
+const allFoods = [
+  // === 必吃级 ===
+  { name: "徐家优选脆哨", area: "民生路", lat: 26.5828, lng: 106.7132, priority: "must", dish: "脆哨", time: "白天", note: "可带走当零食/伴手礼" },
+  { name: "丁家脆哨", area: "民生路", lat: 26.5826, lng: 106.7134, priority: "must", dish: "脆哨", time: "白天", note: "贵阳脆哨老字号" },
+  { name: "余孃洋芋粑", area: "民生路×正新街", lat: 26.5823, lng: 106.7138, priority: "must", dish: "洋芋粑", time: "午后/傍晚", note: "现做现吃最佳" },
+  { name: "金牌罗记肠旺面", area: "蔡家街", lat: 26.5816, lng: 106.7149, priority: "must", dish: "肠旺面", time: "早餐 7:00", note: "贵阳早餐之王 · 蔡家街与中山东路交叉口" },
+  { name: "忆苗乡老酸汤", area: "蔡家街", lat: 26.5820, lng: 106.7146, priority: "must", dish: "酸汤砂锅粉", time: "早餐", note: "开胃醒神" },
+  { name: "毛辣果虾酸牛肉", area: "护国路", lat: 26.5748, lng: 106.7168, priority: "must", dish: "虾酸牛肉", time: "晚餐", note: "护国路180号二层 · 独山特色贵阳少见" },
+  { name: "织金土烙锅", area: "护国路", lat: 26.5746, lng: 106.7170, priority: "must", dish: "烙锅", time: "晚餐", note: "毛辣果旁边，一次吃两家" },
+  { name: "王旭甜品", area: "护国路", lat: 26.5752, lng: 106.7166, priority: "must", dish: "水果豆花", time: "餐后", note: "必点！！！水果豆花" },
+  { name: "烧包烧烤店", area: "虎门巷", lat: 26.5853, lng: 106.7131, priority: "must", dish: "烧烤", time: "深夜", note: "7/4演唱会后来" },
+  { name: "新大新豆米火锅", area: "喷水池", lat: 26.5835, lng: 106.7115, priority: "must", dish: "豆米火锅", time: "任意", note: "中华中路130号南国花锦7楼 · 离开前最后一顿大餐" },
+
+  // === 精选级 ===
+  { name: "六广门毛阿姨糯米饭", area: "八鸽岩路", lat: 26.5918, lng: 106.7052, priority: "pick", dish: "糯米饭", time: "早餐", note: "7/5赶高铁干粮" },
+  { name: "但家香酥鸭", area: "民生路", lat: 26.5830, lng: 106.7128, priority: "pick", dish: "香酥鸭", time: "白天", note: "打包带走" },
+  { name: "俞记安顺破酥包", area: "民生路", lat: 26.5824, lng: 106.7136, priority: "pick", dish: "破酥包", time: "早餐", note: "" },
+  { name: "董家红油米皮", area: "民生路", lat: 26.5827, lng: 106.7130, priority: "pick", dish: "红油米皮", time: "早餐/午餐", note: "" },
+  { name: "骆玉冰浆", area: "民生路", lat: 26.5822, lng: 106.7137, priority: "pick", dish: "冰浆", time: "午后", note: "解暑" },
+  { name: "小平香辣素粉", area: "省府路", lat: 26.5812, lng: 106.7148, priority: "pick", dish: "香辣素粉", time: "早午餐", note: "" },
+  { name: "老凯里酸汤鱼", area: "省府路", lat: 26.5808, lng: 106.7152, priority: "pick", dish: "酸汤鱼", time: "午餐", note: "大菜" },
+  { name: "胡子哥酸汤牛肉", area: "护国路", lat: 26.5754, lng: 106.7164, priority: "pick", dish: "酸汤牛肉", time: "晚餐", note: "备选" },
+  { name: "黔渔翁豆花渎鱼", area: "护国路", lat: 26.5745, lng: 106.7172, priority: "pick", dish: "豆花渎鱼", time: "晚餐", note: "备选" },
+  { name: "黔诚酸汤牛肉", area: "大南门", lat: 26.5732, lng: 106.7152, priority: "pick", dish: "酸汤牛肉", time: "早晚饭", note: "7/4演唱会前" },
+  { name: "林城雷家豆腐圆子", area: "大南门", lat: 26.5738, lng: 106.7148, priority: "pick", dish: "豆腐圆子", time: "下午", note: "小吃" },
+  { name: "巴倒烫烤鱼", area: "陕西路", lat: 26.5862, lng: 106.7108, priority: "pick", dish: "烤鱼", time: "深夜", note: "7/4深夜" },
+  { name: "葫芦烤鸡", area: "友谊路", lat: 26.5872, lng: 106.7118, priority: "pick", dish: "烤鸡", time: "深夜", note: "7/4深夜" },
+  { name: "丝恋丝娃娃", area: "喷水池国贸", lat: 26.5828, lng: 106.7117, priority: "pick", dish: "丝娃娃", time: "任意", note: "国贸广场店 · 贵阳名片" },
+  { name: "社会牛肉粉", area: "喷水池", lat: 26.5842, lng: 106.7103, priority: "pick", dish: "牛肉粉", time: "任意", note: "" },
+
+  // === 备选级 ===
+  { name: "董记鬼扯手", area: "民生路", lat: 26.5821, lng: 106.7139, priority: "backup", dish: "甜辣土豆片", time: "白天", note: "" },
+  { name: "彭记卤味", area: "民生路", lat: 26.5829, lng: 106.7131, priority: "backup", dish: "卤味", time: "白天", note: "" },
+  { name: "徐记碗耳糕", area: "民生路", lat: 26.5825, lng: 106.7133, priority: "backup", dish: "碗耳糕", time: "白天", note: "" },
+  { name: "邮电医院炸串", area: "蔡家街", lat: 26.5815, lng: 106.7150, priority: "backup", dish: "炸串", time: "下午", note: "" },
+  { name: "胖姐油炸臭豆腐", area: "蔡家街", lat: 26.5819, lng: 106.7147, priority: "backup", dish: "臭豆腐", time: "下午", note: "" },
+  { name: "巧八角冰浆", area: "护国路", lat: 26.5751, lng: 106.7169, priority: "backup", dish: "冰浆", time: "午后", note: "" },
+  { name: "小满牛肉粉", area: "护国路", lat: 26.5753, lng: 106.7165, priority: "backup", dish: "牛肉粉", time: "任意", note: "" },
+  { name: "红姐酸辣烫", area: "护国路", lat: 26.5750, lng: 106.7171, priority: "backup", dish: "酸辣烫", time: "晚餐", note: "" },
+  { name: "老夫子铁签烤肉", area: "大南门", lat: 26.5734, lng: 106.7151, priority: "backup", dish: "铁签烤肉", time: "晚上", note: "" },
+  { name: "销魂炒饭", area: "大南门", lat: 26.5736, lng: 106.7149, priority: "backup", dish: "炒饭", time: "晚上", note: "" },
+  { name: "虎门巷高坎坎烤肉", area: "虎门巷", lat: 26.5856, lng: 106.7128, priority: "backup", dish: "烤肉", time: "深夜", note: "" },
+  { name: "土风豆米火锅", area: "黔灵东路", lat: 26.5882, lng: 106.7098, priority: "backup", dish: "豆米火锅", time: "晚餐", note: "" },
+  { name: "安顺牛肉粉馆", area: "太平路", lat: 26.5833, lng: 106.7096, priority: "backup", dish: "牛肉粉", time: "任意", note: "太平路32号" },
+  { name: "永笠板筋饭", area: "太平路", lat: 26.5836, lng: 106.7093, priority: "backup", dish: "板筋饭", time: "午餐", note: "" },
+  { name: "飞山街一绝板筋王", area: "飞山街", lat: 26.5822, lng: 106.7063, priority: "backup", dish: "板筋", time: "晚餐", note: "" }
+];
+
+// === RENDER ===
+let currentDay = 'day1';
+
+function renderDayPanel(dayKey) {
+  const day = itinerary[dayKey];
+  let foodHtml = day.foodHighlights.map((f, i) => {
+    // 先从 allFoods 里按 area 匹配精确坐标，匹不到则用片区
+    var match = allFoods.find(function(fd) { return fd.name.indexOf(f.name.split(' / ')[0]) === 0 || f.name.indexOf(fd.name) === 0 || f.area.indexOf(fd.area) >= 0; });
+    var url;
+    if (match && match.lat) {
+      url = buildMapLink({lat: match.lat, lng: match.lng, label: match.name});
+    } else {
+      var ck = getFoodCoordKey(f.area);
+      var pt = areaCoords[ck] || areaCoords['penshuichi'];
+      url = buildMapLink(pt);
+    }
+    return '<a class="food-row food-row-link" href="' + url + '" target="_blank" rel="noopener">'
+      + '<div><div class="food-name">' + f.name + ' ↗</div>'
+      + '<div class="food-detail">' + (f.note || '点击导航') + '</div></div>'
+      + '<span class="food-area">📍 ' + f.area + '</span>'
+      + '</a>';
+  }).join('');
+
+  let risksHtml = day.risks.length ? day.risks.map(r =>
+    `<div class="risk-alert${r.level === 'danger' ? ' risk-danger' : ''}">
+      <strong>${r.level === 'danger' ? '🔴' : '⚠️'} ${r.level === 'danger' ? '高风险' : '注意'}</strong>：${r.text}
+    </div>`
+  ).join('') : '';
+
+  return `
+    <div class="day-panel active" id="panel-${dayKey}">
+      <div class="card">
+        <h3>${day.emoji} ${day.date} · ${day.theme}</h3>
+        ${day.timeline.map(t => `
+          <div class="timeline-item">
+            <div class="timeline-time">${t.time}</div>
+            <div class="timeline-body">
+              ${t.event}
+              ${t.note ? `<div class="timeline-note">${t.note}</div>` : ''}
+            </div>
+          </div>
+        `).join('')}
+        ${risksHtml}
+      </div>
+
+      <div class="card">
+        <h3>🍜 今日美食推荐</h3>
+        ${foodHtml}
+      </div>
+    </div>
+  `;
+}
+
+// === NATIVE MAP NAVIGATION ===
+// Auto-detect platform: prefer 高德 on Android, Apple Maps on iOS
+var isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+
+function buildMapLink(pt) {
+  // 高德 uri scheme — opens 高德 app if installed, falls back to web
+  var gaode = 'https://uri.amap.com/marker?position=' + pt.lng + ',' + pt.lat
+    + '&name=' + encodeURIComponent(pt.label) + '&callnative=1';
+  // Apple Maps
+  var apple = 'https://maps.apple.com/?ll=' + pt.lat + ',' + pt.lng
+    + '&q=' + encodeURIComponent(pt.label);
+  // Google Maps (fallback)
+  var google = 'https://www.google.com/maps?q=' + pt.lat + ',' + pt.lng;
+
+  if (isIOS) { return apple; }
+  return gaode;
+}
+
+function renderDayNav(dayKey) {
+  var points = dayPoints[dayKey] || [];
+  if (points.length === 0) { document.getElementById('navLinks').innerHTML = ''; return; }
+
+  var iconMap = { food: '🍜', hotel: '🏨', transport: '🚄', venue: '🎤', scenic: '🏞️' };
+
+  var html = points.map(function(key) {
+    var pt = areaCoords[key];
+    var icon = iconMap[pt.icon] || '📍';
+    var url = buildMapLink(pt);
+    var typeLabel = {
+      food: '美食街', hotel: '住宿', transport: '交通', venue: '演唱会', scenic: '景区'
+    }[pt.icon] || '';
+    return '<a class="nav-btn" href="' + url + '" target="_blank" rel="noopener">'
+      + '<span class="nav-icon">' + icon + '</span>'
+      + '<span class="nav-label">' + pt.label + '<small>' + typeLabel + '</small></span>'
+      + '<span class="nav-arrow">↗</span>'
+      + '</a>';
+  }).join('');
+
+  document.getElementById('navLinks').innerHTML = html;
+}
+
+function switchDay(dayKey) {
+  currentDay = dayKey;
+  document.querySelectorAll('.tab-nav button').forEach(b => b.classList.remove('active'));
+  document.querySelector(`[data-day="${dayKey}"]`).classList.add('active');
+  document.getElementById('content').innerHTML = renderDayPanel(dayKey);
+  renderDayNav(dayKey);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Tab click handlers
+document.getElementById('tabNav').addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  switchDay(btn.dataset.day);
+});
+
+// === FOOD LIST ===
+let foodFilter = 'all';
+
+function areaToTag(area) {
+  if (area.includes('民生路') || area.includes('正新街')) return 'minsheng';
+  if (area.includes('护国路')) return 'huguo';
+  if (area.includes('喷水池') || area.includes('太平路')) return 'penshuichi';
+  if (area.includes('友谊路') || area.includes('虎门巷') || area.includes('陕西路')) return 'youyi';
+  if (area.includes('蔡家街')) return 'caijia';
+  if (area.includes('大南门')) return 'dananmen';
+  if (area.includes('文昌路')) return 'wenchang';
+  return 'other';
+}
+
+function renderFoodList() {
+  const filtered = allFoods.filter(f => {
+    if (foodFilter === 'all') return true;
+    if (['must','pick','backup'].includes(foodFilter)) return f.priority === foodFilter;
+    return areaToTag(f.area) === foodFilter;
+  });
+
+  const priorityBadge = { must: '🥇必吃', pick: '🥈精选', backup: '🥉备选' };
+  const badgeClass = { must: 'badge-must', pick: 'badge-pick', backup: 'badge-backup' };
+
+  document.getElementById('foodList').innerHTML = filtered.length === 0
+    ? '<p style="text-align:center;color:var(--subtext);padding:20px;">没有匹配的美食</p>'
+    : filtered.map(f => {
+        var url = buildMapLink({lat: f.lat, lng: f.lng, label: f.name});
+        return '<a class="food-row food-row-link" href="' + url + '" target="_blank" rel="noopener">'
+          + '<div><div class="food-name">' + f.name + ' <span class="badge ' + badgeClass[f.priority] + '">' + priorityBadge[f.priority] + '</span> ↗</div>'
+          + '<div class="food-detail">🍽️ ' + f.dish + ' · ⏰ ' + f.time + (f.note ? ' · ' + f.note : '') + '</div></div>'
+          + '<span class="food-area">📍 ' + f.area + '</span>'
+          + '</a>';
+      }).join('');
+}
+
+document.getElementById('foodFilters').addEventListener('click', e => {
+  const chip = e.target.closest('.filter-chip');
+  if (!chip) return;
+  document.querySelectorAll('#foodFilters .filter-chip').forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+  foodFilter = chip.dataset.filter;
+  renderFoodList();
+});
+
+// === COLLAPSIBLE PANELS ===
+document.getElementById('emergencyToggle').addEventListener('click', function() {
+  this.classList.toggle('open');
+  document.getElementById('emergencyBody').classList.toggle('open');
+});
+document.getElementById('photoToggle').addEventListener('click', function() {
+  this.classList.toggle('open');
+  document.getElementById('photoBody').classList.toggle('open');
+});
+
+// Init
+(function bootstrap() {
+  document.getElementById('content').innerHTML = renderDayPanel('day1');
+  renderDayNav('day1');
+  renderFoodList();
+})();
+
+// Register Service Worker for PWA offline support
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').then(function(reg) {
+    console.log('SW registered:', reg.scope);
+  }).catch(function(err) {
+    console.log('SW registration failed:', err);
+  });
+}
+</script>
+</body>
+</html>
