@@ -1,0 +1,22 @@
+{
+  "name": "贵阳四日旅行攻略",
+  "short_name": "贵阳攻略",
+  "description": "2026.7.2-7.5 贵阳旅行攻略 · 黄果树 · 荔波小七孔 · 演唱会 · 美食地图",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#C41E3A",
+  "background_color": "#FFF8F0",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
