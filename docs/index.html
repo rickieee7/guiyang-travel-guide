@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#C41E3A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="随行">
+<title>随行 · 贵阳四日旅行攻略</title>
+<style>
+:root { --red: #C41E3A; --red-light: #FDE8EC; --bg: #FFF8F0; --surface: #FFFFFF; --text: #2D2D2D; --subtext: #6B6B6B; --border: #E8DDD4; --green: #059669; --amber: #F59E0B; --shadow: 0 2px 8px rgba(0,0,0,0.06); --radius: 12px; --bottom-bar-h: 56px; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.6; max-width: 480px; margin: 0 auto; min-height: 100vh; padding-bottom: calc(var(--bottom-bar-h) + env(safe-area-inset-bottom, 0px)); }
+.card { background:var(--surface); border-radius:var(--radius); padding:14px; margin-bottom:12px; box-shadow:var(--shadow); }
+.card h3 { font-size:15px; margin-bottom:8px; }
+.page { display:none; padding:12px 16px; }
+.page.active { display:block; }
+.bottom-bar { position:fixed; bottom:0; left:50%; transform:translateX(-50%); max-width:480px; width:100%; background:var(--surface); display:flex; justify-content:space-around; align-items:center; height:var(--bottom-bar-h); border-top:1px solid var(--border); padding-bottom: env(safe-area-inset-bottom, 0px); z-index:100; }
+.bottom-bar .bb-item { text-align:center; font-size:10px; color:var(--subtext); padding:4px 12px; cursor:pointer; transition:color 0.2s; }
+.bottom-bar .bb-item.active { color:var(--red); font-weight:600; }
+.bottom-bar .bb-item .bb-icon { font-size:20px; display:block; }
+.date-tabs { display:flex; overflow-x:auto; background:var(--surface); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:50; }
+.date-tabs button { flex:1 0 auto; min-width:25%; padding:10px 6px; border:none; background:none; font-size:12px; color:var(--subtext); cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap; }
+.date-tabs button.active { color:var(--red); border-bottom-color:var(--red); font-weight:600; }
+.tl-item { display:flex; gap:8px; padding:10px 0; border-bottom:1px solid var(--border); align-items:flex-start; }
+.tl-time { width:42px; text-align:right; font-size:12px; font-weight:600; color:var(--red); flex-shrink:0; }
+.tl-body { flex:1; font-size:13px; }
+.tl-note { font-size:11px; color:var(--subtext); }
+.tl-check { width:22px; height:22px; border:2px solid var(--border); border-radius:50%; flex-shrink:0; cursor:pointer; transition:all 0.2s; }
+.tl-check.done { background:var(--green); border-color:var(--green); }
+.tl-check.done::after { content:"✓"; color:#fff; font-size:12px; display:flex; justify-content:center; align-items:center; height:100%; }
+.tl-item.done .tl-body { text-decoration:line-through; opacity:0.5; }
+.nav-pill { display:inline-flex; align-items:center; gap:3px; background:var(--red); color:#fff; padding:5px 12px; border-radius:14px; font-size:12px; font-weight:600; text-decoration:none; flex-shrink:0; margin-left:8px; transition:opacity 0.15s; }
+.nav-pill:active { opacity:0.7; }
+.btn-primary { background:var(--red); color:#fff; border:none; padding:12px 32px; border-radius:24px; font-size:15px; font-weight:600; cursor:pointer; }
+.btn-outline { background:transparent; color:var(--red); border:1px solid var(--red); padding:10px 28px; border-radius:24px; font-size:14px; cursor:pointer; }
+.food-area-card { background:var(--surface); border-radius:var(--radius); padding:12px; margin-bottom:12px; box-shadow:var(--shadow); }
+.food-area-card h3 { font-size:15px; margin-bottom:6px; display:flex; align-items:center; gap:6px; }
+.food-area-card .food-row-item { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); }
+.food-area-card .food-row-item:last-child { border-bottom:none; }
+.food-row-name { font-size:14px; font-weight:600; flex:1; }
+.food-row-detail { font-size:11px; color:var(--subtext); }
+.anchor-card { border-radius:10px; padding:12px; margin-bottom:6px; display:flex; gap:10px; align-items:center; }
+.anchor-flight { background:#FDE8EC; }
+.anchor-event { background:#EDE9FE; }
+.sort-item { background:var(--surface); border-radius:10px; padding:14px; margin-bottom:6px; display:flex; align-items:center; justify-content:space-between; cursor:grab; border:1px solid var(--border); }
+.setting-row { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--border); }
+.toggle-switch { width:44px; height:24px; background:#E5E7EB; border-radius:12px; cursor:pointer; position:relative; transition:background 0.3s; }
+.toggle-switch.on { background:var(--green); }
+.toggle-switch::after { content:""; position:absolute; top:2px; left:2px; width:20px; height:20px; background:#fff; border-radius:50%; transition:transform 0.3s; }
+.toggle-switch.on::after { transform:translateX(20px); }
+.search-box { background:var(--surface); border-radius:10px; padding:10px 12px; margin-bottom:12px; display:flex; gap:8px; align-items:center; border:1px solid var(--border); }
+.search-box input { border:none; flex:1; font-size:14px; outline:none; background:transparent; }
+@media (min-width:768px) { body { max-width:720px; } }
+</style>
+</head>
+<body>
+
+<!-- ===== 时间线页 ===== -->
+<div class="page active" id="page-timeline">
+  <div class="date-tabs" id="dateTabs"></div>
+  <div id="alertBar"></div>
+  <div id="timeline"></div>
+</div>
+
+<!-- ===== Plan B 页 ===== -->
+<div class="page" id="page-planb">
+  <div class="card"><h3>🔄 Plan B</h3><div id="planbContent"></div></div>
+</div>
+
+<!-- ===== 设置页 ===== -->
+<div class="page" id="page-settings">
+  <div class="card"><h3>🎯 旅行偏好</h3><div id="prefSort"></div></div>
+  <div class="card"><h3>📅 硬约束</h3><div id="anchorList"></div></div>
+  <div class="card"><h3>📍 收藏夹</h3><div id="pinList"></div><div id="searchAdd"></div></div>
+  <div class="card"><div class="setting-row"><span>✅ 完成勾选</span><div class="toggle-switch on" id="toggleCheck" onclick="this.classList.toggle('on')"></div></div></div>
+</div>
+
+<!-- ===== 美食页 ===== -->
+<div class="page" id="page-food">
+  <div id="foodByArea"></div>
+</div>
+
+<!-- ===== 底部栏 ===== -->
+<div class="bottom-bar" id="bar-timeline">
+  <div class="bb-item active" onclick="switchPage('page-timeline')"><span class="bb-icon">📅</span>时间线</div>
+  <div class="bb-item" onclick="switchPage('page-food')"><span class="bb-icon">🍜</span>美食</div>
+  <div class="bb-item" onclick="switchPage('page-planb')"><span class="bb-icon">🔄</span>Plan B</div>
+  <div class="bb-item" onclick="switchPage('page-settings')"><span class="bb-icon">⚙️</span>设置</div>
+</div>
+<div class="bottom-bar" id="bar-food" style="display:none;">
+  <div class="bb-item" onclick="switchPage('page-timeline')"><span class="bb-icon">↩</span>返回时间线</div>
+  <div class="bb-item" onclick="scrollToArea('huguo')"><span class="bb-icon">🔥</span>护国路</div>
+  <div class="bb-item" onclick="scrollToArea('minsheng')"><span class="bb-icon">📍</span>民生路</div>
+  <div class="bb-item" onclick="scrollToArea('penshuichi')"><span class="bb-icon">🏙️</span>喷水池</div>
+</div>
+<div class="bottom-bar" id="bar-planb" style="display:none;">
+  <div class="bb-item" onclick="switchPage('page-timeline')"><span class="bb-icon">↩</span>返回时间线</div>
+  <div class="bb-item active" onclick="regeneratePlanB()"><span class="bb-icon">🔄</span>重新推演</div>
+</div>
+<div class="bottom-bar" id="bar-settings" style="display:none;">
+  <div class="bb-item" onclick="switchPage('page-timeline')"><span class="bb-icon">↩</span>返回时间线</div>
+  <div class="bb-item" onclick="saveAndRegenerate()"><span class="bb-icon">⚡</span>保存并重新生成</div>
+</div>
+
+<script>
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// data.js — 贵阳Demo数据
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+var DEFAULT_PREFERENCES = [
+  { key: "nature", label: "自然风光", weight: 1, emoji: "🏞️" },
+  { key: "food", label: "美食探索", weight: 2, emoji: "🍜" },
+  { key: "culture", label: "人文历史", weight: 3, emoji: "🏛️" },
+  { key: "photo", label: "网红打卡", weight: 4, emoji: "📸" }
+];
+
+var DEFAULT_ANCHORS = [
+  { id:"a1", type:"flight", icon:"✈️", title:"去程 · 太原→贵阳",
+    datetime:"2026-07-02T09:02", arriveAt:"2026-07-02T11:45",
+    location:"太原武宿T1 → 贵阳龙洞堡T3",
+    lat:26.5385, lng:106.8010, note:"提前90min到机场 · 取行李15-20min" },
+  { id:"a2", type:"event", icon:"🎤", title:"演唱会",
+    datetime:"2026-07-04T19:30", location:"贵阳奥体中心",
+    lat:26.6200, lng:106.6280, note:"18:00前必须到达奥体" },
+  { id:"a3", type:"flight", icon:"✈️", title:"返程 · 贵阳→太原",
+    datetime:"2026-07-05T21:05",
+    location:"贵阳龙洞堡T3 → 太原武宿T2",
+    lat:26.5385, lng:106.8010, note:"🎁 记得买特产：酸汤火锅底料！· 19:00前到达机场 · 17:30出发" }
+];
+
+var DEFAULT_PINS = [
+  { id:"p01", type:"nature", name:"黄果树瀑布", lat:25.993, lng:105.669, area:"安顺市", city:"安顺", duration:240, timeHint:"morning", note:"大瀑布40min→天星桥1.5h→陡坡塘40min · 🚄G2969 07:40-08:09(贵阳北→安顺西 29min)+大巴40min · 🔴13:30硬性离开" },
+  { id:"p02", type:"nature", name:"荔波小七孔", lat:25.298, lng:107.709, area:"荔波县", city:"荔波", duration:360, timeHint:"morning", note:"暴雨关闭 · 本次不去", available: false },
+  { id:"p03", type:"culture", name:"黔灵山公园", lat:26.597, lng:106.694, area:"云岩区", city:"贵阳", duration:120, timeHint:"morning", note:"门票5元 · 看猴子+俯瞰贵阳全景 · ⚠️不要手提塑料袋" },
+  { id:"p04", type:"culture", name:"甲秀楼", lat:26.574, lng:106.7155, area:"南明区", city:"贵阳", duration:40, timeHint:"afternoon", note:"贵阳地标 · 免费 · 南明河畔拍照" },
+  { id:"p05", type:"photo", name:"花果园白宫", lat:26.566, lng:106.696, area:"花果园", city:"贵阳", duration:30, timeHint:"evening", note:"网红打卡点 · 夜景更出片 · 免费" },
+  { id:"p06", type:"culture", name:"花溪夜郎谷", lat:26.424, lng:106.680, area:"花溪区", city:"贵阳", duration:120, timeHint:"afternoon", note:"石头城堡艺术区 · 拍照极佳 · 门票20元 · 距市区40min车程" },
+  { id:"p07", type:"culture", name:"贵州省博物馆", lat:26.620, lng:106.663, area:"观山湖区", city:"贵阳", duration:120, timeHint:"morning", note:"免费需预约 · 了解贵州少数民族文化" },
+  { id:"p08", type:"photo", name:"文昌阁+电台街", lat:26.579, lng:106.718, area:"文昌路", city:"贵阳", duration:60, timeHint:"afternoon", note:"老城漫步 · 免费" },
+  { id:"p09", type:"photo", name:"东山寺（东山山体公园）", lat:26.5825, lng:106.7230, area:"东山", city:"贵阳", duration:90, timeHint:"afternoon", note:"打车到山顶 · 俯瞰贵阳全景+看日落 · 拍照绝佳 · 免费" },
+  { id:"p10", type:"culture", name:"北天主堂", lat:26.5880, lng:106.7150, area:"陕西路", city:"贵阳", duration:40, timeHint:"morning", note:"中西合璧建筑 · 免费参观" },
+  { id:"f01", type:"food", name:"徐家优选脆哨", lat:26.5828, lng:106.7132, area:"民生路", city:"贵阳", duration:15, timeHint:"morning", note:"🥇必吃 · 可带走当零食/伴手礼", price:"¥25" },
+  { id:"f02", type:"food", name:"丁家脆哨", lat:26.5826, lng:106.7134, area:"民生路", city:"贵阳", duration:15, timeHint:"morning", note:"🥇必吃 · 贵阳脆哨老字号", price:"¥25" },
+  { id:"f03", type:"food", name:"余孃洋芋粑", lat:26.5823, lng:106.7138, area:"民生路×正新街", city:"贵阳", duration:20, timeHint:"afternoon", note:"🥇必吃 · 现做现吃最佳", price:"¥8" },
+  { id:"f04", type:"food", name:"金牌罗记肠旺面", lat:26.5816, lng:106.7149, area:"蔡家街", city:"贵阳", duration:30, timeHint:"morning", note:"🥇必吃 · 贵阳早餐之王 · 蔡家街与中山东路交叉口", price:"¥15" },
+  { id:"f05", type:"food", name:"忆苗乡老酸汤", lat:26.5820, lng:106.7146, area:"蔡家街", city:"贵阳", duration:30, timeHint:"morning", note:"🥇必吃 · 酸汤砂锅粉", price:"¥15" },
+  { id:"f06", type:"food", name:"毛辣果虾酸牛肉", lat:26.5748, lng:106.7168, area:"护国路180号二层", city:"贵阳", duration:60, timeHint:"evening", note:"🥇必吃 · 独山特色 · 贵阳少见", price:"¥70" },
+  { id:"f07", type:"food", name:"织金土烙锅", lat:26.5746, lng:106.7170, area:"护国路", city:"贵阳", duration:45, timeHint:"evening", note:"🥇必吃 · 毛辣果旁边", price:"¥50" },
+  { id:"f08", type:"food", name:"王旭甜品", lat:26.5752, lng:106.7166, area:"护国路", city:"贵阳", duration:20, timeHint:"evening", note:"🥇必吃 · 水果豆花必点！！！", price:"¥12" },
+  { id:"f09", type:"food", name:"胡子哥酸汤牛肉", lat:26.5754, lng:106.7164, area:"护国路", city:"贵阳", duration:60, timeHint:"evening", note:"🥈精选 · 酸汤牛肉备选", price:"¥65" },
+  { id:"f10", type:"food", name:"新大新豆米火锅", lat:26.5835, lng:106.7115, area:"喷水池", city:"贵阳", duration:60, timeHint:"any", note:"🥇必吃 · 中华中路130号南国花锦7楼", price:"¥80" },
+  { id:"f11", type:"food", name:"黔渔翁豆花渎鱼", lat:26.5745, lng:106.7172, area:"护国路", city:"贵阳", duration:60, timeHint:"evening", note:"🥈精选 · 备选", price:"¥60" },
+  { id:"f12", type:"food", name:"烧包烧烤店", lat:26.5853, lng:106.7131, area:"虎门巷", city:"贵阳", duration:60, timeHint:"evening", note:"🥇必吃 · 7/4演唱会后的深夜烧烤！", price:"¥50" },
+  { id:"f13", type:"food", name:"小平香辣素粉", lat:26.5812, lng:106.7148, area:"省府路", city:"贵阳", duration:20, timeHint:"morning", note:"🥈精选", price:"¥12" },
+  { id:"f14", type:"food", name:"老凯里酸汤鱼", lat:26.5808, lng:106.7152, area:"省府路", city:"贵阳", duration:60, timeHint:"afternoon", note:"🥈精选 · 大菜", price:"¥90" },
+  { id:"f15", type:"food", name:"黔诚酸汤牛肉", lat:26.5732, lng:106.7152, area:"大南门", city:"贵阳", duration:60, timeHint:"evening", note:"🥈精选 · 7/4演唱会前", price:"¥65" },
+  { id:"f16", type:"food", name:"林城雷家豆腐圆子", lat:26.5738, lng:106.7148, area:"大南门", city:"贵阳", duration:20, timeHint:"afternoon", note:"🥈精选 · 小吃", price:"¥10" },
+  { id:"f17", type:"food", name:"巴倒烫烤鱼", lat:26.5862, lng:106.7108, area:"陕西路", city:"贵阳", duration:60, timeHint:"evening", note:"🥈精选 · 7/4深夜", price:"¥60" },
+  { id:"f18", type:"food", name:"葫芦烤鸡", lat:26.5872, lng:106.7118, area:"友谊路", city:"贵阳", duration:45, timeHint:"evening", note:"🥈精选 · 7/4深夜烤鸡", price:"¥40" },
+  { id:"f19", type:"food", name:"丝恋丝娃娃", lat:26.5828, lng:106.7117, area:"喷水池国贸", city:"贵阳", duration:45, timeHint:"any", note:"🥈精选 · 贵阳名片", price:"¥40" },
+  { id:"f20", type:"food", name:"六广门毛阿姨糯米饭", lat:26.5918, lng:106.7052, area:"八鸽岩路", city:"贵阳", duration:15, timeHint:"morning", note:"🥈精选 · 赶高铁干粮", price:"¥8" },
+  { id:"f21", type:"food", name:"但家香酥鸭", lat:26.5830, lng:106.7128, area:"民生路", city:"贵阳", duration:15, timeHint:"afternoon", note:"🥈精选 · 打包带走", price:"¥30" },
+  { id:"f22", type:"food", name:"董家红油米皮", lat:26.5827, lng:106.7130, area:"民生路", city:"贵阳", duration:20, timeHint:"morning", note:"🥈精选", price:"¥10" },
+  { id:"f23", type:"food", name:"骆玉冰浆", lat:26.5822, lng:106.7137, area:"民生路", city:"贵阳", duration:15, timeHint:"afternoon", note:"🥈精选 · 解暑", price:"¥10" },
+  { id:"f24", type:"food", name:"俞记安顺破酥包", lat:26.5824, lng:106.7136, area:"民生路", city:"贵阳", duration:15, timeHint:"morning", note:"🥈精选", price:"¥6" },
+  { id:"f25", type:"food", name:"社会牛肉粉", lat:26.5842, lng:106.7103, area:"喷水池", city:"贵阳", duration:30, timeHint:"any", note:"🥈精选", price:"¥15" },
+  { id:"f26", type:"food", name:"巧八角冰浆", lat:26.5751, lng:106.7169, area:"护国路", city:"贵阳", duration:15, timeHint:"afternoon", note:"🥉备选", price:"¥12" },
+  { id:"f27", type:"food", name:"小满牛肉粉", lat:26.5753, lng:106.7165, area:"护国路", city:"贵阳", duration:30, timeHint:"any", note:"🥉备选", price:"¥15" },
+  { id:"f28", type:"food", name:"安顺牛肉粉馆", lat:26.5833, lng:106.7096, area:"太平路32号", city:"贵阳", duration:30, timeHint:"morning", note:"🥉备选 · 太平路32号", price:"¥15" },
+  { id:"f29", type:"food", name:"永笠板筋饭", lat:26.5836, lng:106.7093, area:"太平路", city:"贵阳", duration:30, timeHint:"afternoon", note:"🥉备选", price:"¥20" },
+  { id:"f30", type:"food", name:"飞山街一绝板筋王", lat:26.5822, lng:106.7063, area:"飞山街", city:"贵阳", duration:45, timeHint:"evening", note:"🥉备选", price:"¥35" },
+  { id:"f31", type:"food", name:"贵厨酸汤牛肉", lat:26.5805, lng:106.7060, area:"云岩区", city:"贵阳", duration:60, timeHint:"evening", note:"🥇必吃 · 博主推荐 · 7/3晚餐", price:"¥70" },
+  { id:"f32", type:"food", name:"大健鱿鱼鸡", lat:26.5850, lng:106.7125, area:"友谊路", city:"贵阳", duration:60, timeHint:"afternoon", note:"🥈精选 · 博主推荐 · 7/4午餐", price:"¥55" },
+  { id:"f33", type:"food", name:"陈氏人家豆米火锅", lat:26.5740, lng:106.7140, area:"大南门", city:"贵阳", duration:60, timeHint:"evening", note:"🥈精选 · 博主推荐 · 7/4晚餐", price:"¥60" },
+  { id:"f34", type:"food", name:"柒火锅（三桥店）", lat:26.5920, lng:106.6850, area:"三桥", city:"贵阳", duration:60, timeHint:"evening", note:"🥈精选 · 重庆火锅风格 · 用户指定", price:"¥80" },
+  { id:"f35", type:"food", name:"花溪牛肉粉", lat:26.5835, lng:106.7110, area:"喷水池", city:"贵阳", duration:30, timeHint:"morning", note:"🥈精选 · 贵阳另一大名粉 · 7/4早餐", price:"¥15" },
+  { id:"f36", type:"reminder", name:"🎁 特产：酸汤火锅底料", lat:26.5828, lng:106.7117, area:"喷水池国贸/超市", city:"贵阳", duration:15, timeHint:"any", note:"🧧 返程前购买 · 大型超市或特产店均有售 · 7/5出发去机场前买", price:"¥30-50" }
+];
+
+var CITY_CENTERS = {
+  "贵阳": { lat: 26.58, lng: 106.71 },
+  "安顺": { lat: 26.25, lng: 105.93 },
+  "荔波": { lat: 25.41, lng: 107.88 }
+};
+
+var LS_KEY = 'suixing_trip_v3';
+
+function saveTrip() {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(trip)); } catch(e) {}
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// engine.js — 核心引擎 v4
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function getDateRange() {
+  if (!trip.startDate || !trip.endDate) return [];
+  var dates = [], sp = trip.startDate.split("-").map(Number), ep = trip.endDate.split("-").map(Number);
+  var d = new Date(sp[0], sp[1]-1, sp[2]), end = new Date(ep[0], ep[1]-1, ep[2]);
+  while (d <= end) {
+    var y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,"0"), day = String(d.getDate()).padStart(2,"0");
+    dates.push(y + "-" + m + "-" + day); d.setDate(d.getDate()+1);
+  }
+  return dates;
+}
+
+function timeAdd(t, mins) {
+  var p = t.split(":"), total = parseInt(p[0])*60 + parseInt(p[1]) + mins;
+  total = Math.max(0, Math.min(total, 1439));
+  return String(Math.floor(total/60)).padStart(2,"0") + ":" + String(total%60).padStart(2,"0");
+}
+
+function timeBefore(t1, t2) { return t1 < t2; }
+
+function findPin(id) { return (trip.pins||[]).find(function(p) { return p.id === id; }); }
+
+function addItem(items, time, event, note, opts) {
+  opts = opts || {};
+  items.push({ time: time, event: event, note: note || "", type: opts.type || "system", pinId: opts.pinId || null, anchorId: opts.anchorId || null, lat: opts.lat || null, lng: opts.lng || null, done: false });
+}
+
+function generateTimeline() {
+  var dates = getDateRange();
+  if (dates.length === 0) return;
+  var plans = {};
+  dates.forEach(function(d) { plans[d] = { items:[], usedIds:[] }; });
+
+  // ━ Day1: 7/2 出发+到达+民生路━━━━
+  if (dates.length >= 1) { var d1=dates[0], it=plans[d1].items;
+    addItem(it,"06:00","🚿 起床","早起赶飞机");
+    addItem(it,"06:30","🚕 出发前往太原武宿机场T1","提前90min到达值机安检 · 9:02起飞",{type:"transit",lat:37.7543,lng:112.7136});
+    addItem(it,"09:02","✈️ 太原 → 贵阳","武宿T1→龙洞堡T3 · 9:02起飞 · 11:45到达",{type:"anchor",anchorId:"a1",lat:26.5385,lng:106.8010});
+    addItem(it,"11:45","🛬 到达贵阳龙洞堡机场T3","取行李15-20min",{type:"system",lat:26.5385,lng:106.8010});
+    addItem(it,"12:10","🚕 打车前往喷水池","约25min · 约40元 · 或🚇地铁2号线23min直达¥7",{type:"transit",lat:26.584,lng:106.7105});
+    addItem(it,"12:40","🏨 办理入住 · 放行李","喷水池/大十字区域",{type:"system",lat:26.584,lng:106.7105});
+    addItem(it,"13:10","🍜 民生路午餐扫街","余孃洋芋粑 · 但家香酥鸭 · 董家红油米皮 · 骆玉冰浆等",{type:"system",lat:26.5825,lng:106.7135});
+    addItem(it,"14:30","🏙️ 民生路+正新街 Citywalk","白天街拍 · 脆哨店采购 · 感受贵阳老城市井",{type:"system",lat:26.5825,lng:106.7135});
+    addItem(it,"17:00","🏛️ 甲秀楼","南明河畔 · 贵阳地标 · 免费 · 傍晚光线好拍照",{type:"pin",pinId:"p04",lat:26.574,lng:106.7155});
+    addItem(it,"18:30","🍲 晚餐：新大新豆米火锅（喷水池）","中华中路130号南国花锦7楼",{type:"pin",pinId:"f10",lat:26.5835,lng:106.7115});
+    addItem(it,"20:30","🍢 护国路甜品+夜宵","王旭甜品（水果豆花必点）· 巧八角冰浆 · 小满牛肉粉",{type:"system",lat:26.575,lng:106.7170});
+    addItem(it,"22:00","🏨 回酒店休息","明天行程紧凑");
+  }
+
+  // ━ Day2: 7/3 博主城市人文路线 ━━━━
+  if (dates.length >= 2) { var d2=dates[1], it=plans[d2].items;
+    addItem(it,"07:30","🚿 起床");
+    addItem(it,"08:00","🥡 早餐：金牌罗记肠旺面","🥇贵阳早餐之王 · 蔡家街与中山东路交叉口",{type:"pin",pinId:"f04",lat:26.5816,lng:106.7149});
+    addItem(it,"09:00","🏛️ 贵州省博物馆","免费需预约 · 了解贵州少数民族文化 · 地铁1号线直达 · 约2h",{type:"pin",pinId:"p07",lat:26.620,lng:106.663});
+    addItem(it,"11:30","🚶 返回喷水池 · 民生路午餐","正新路小吃街 · 香酥鸭+土豆片+千层豆腐 · 小吃吃到饱",{type:"system",lat:26.5825,lng:106.7135});
+    addItem(it,"13:30","🚶 城市Citywalk · 文昌阁+电台街","老城漫步 · 感受贵阳历史文化街区 · 免费",{type:"pin",pinId:"p08",lat:26.579,lng:106.718});
+    addItem(it,"15:30","⛰️ 东山寺（东山山体公园）","打车到山顶 · 俯瞰贵阳全景 · 看日落 · 拍照绝佳",{type:"pin",pinId:"p09",lat:26.5825,lng:106.7230});
+    addItem(it,"18:00","🍲 晚餐：贵厨酸汤牛肉","🥇博主推荐 · 酸汤牛肉火锅 · 贵阳灵魂美食",{type:"pin",pinId:"f31",lat:26.5805,lng:106.7060});
+    addItem(it,"19:30","🌉 甲秀楼夜景","南明河畔 · 甲秀楼倒影 · 贵阳最美夜景之一 · 散步消食",{type:"pin",pinId:"p04",lat:26.574,lng:106.7155});
+    addItem(it,"21:30","🏨 回酒店休息");
+  }
+
+  // ━ Day3: 7/4 博主自然文化路线+演唱会 ━━━━
+  if (dates.length >= 3) { var d3=dates[2], it=plans[d3].items;
+    addItem(it,"07:00","🚿 起床");
+    addItem(it,"07:30","🥡 早餐：花溪牛肉粉","贵阳另一大名粉 · 博主推荐早餐",{type:"pin",pinId:"f35",lat:26.5835,lng:106.7110});
+    addItem(it,"08:30","🐒 黔灵山公园","门票¥5 · 看散养猕猴+大熊猫 · 俯瞰贵阳全景 · ⚠️不要手提塑料袋！",{type:"pin",pinId:"p03",lat:26.597,lng:106.694});
+    addItem(it,"11:00","⛪ 北天主堂","中西合璧建筑 · 免费参观 · 约40min",{type:"pin",pinId:"p10",lat:26.588,lng:106.7150});
+    addItem(it,"12:00","🍲 午餐：大健鱿鱼鸡","🥈博主推荐午餐 · 友谊路附近",{type:"pin",pinId:"f32",lat:26.585,lng:106.7125});
+    addItem(it,"13:30","🗿 花溪夜郎谷","石头城堡艺术区 · 拍照极佳 · 门票¥20 · 距市区40min车程 · 约2h",{type:"pin",pinId:"p06",lat:26.424,lng:106.680});
+    addItem(it,"16:00","🚕 从夜郎谷返回市区");
+    addItem(it,"16:45","🍲 早晚饭：陈氏人家豆米火锅","🥈博主推荐晚餐 · 大南门附近",{type:"pin",pinId:"f33",lat:26.574,lng:106.7140});
+    addItem(it,"17:30","🚇 地铁出发去奥体中心","喷水池→观山湖公园站约30min · 不可再晚！",{type:"transit",lat:26.620,lng:106.6280});
+    addItem(it,"18:00","🏟️ 到达奥体中心","预留充足缓冲时间",{type:"system",lat:26.620,lng:106.6280});
+    addItem(it,"19:30","🎤 演唱会！！！","",{type:"anchor",anchorId:"a2",lat:26.620,lng:106.6280});
+    addItem(it,"21:30","🎉 演唱会结束");
+    addItem(it,"22:00","🍢 虎门巷+友谊路深夜烧烤","烧包烧烤店 · 葫芦烤鸡 · 巴倒烫烤鱼 · 虎门巷高坎坎烤肉",{type:"system",lat:26.587,lng:106.7120});
+    addItem(it,"23:30","🏨 回酒店休息");
+  }
+
+  // ━ Day4: 7/5 黄果树+返程 ━━━━
+  if (dates.length >= 4) { var d4=dates[3], it=plans[d4].items;
+    addItem(it,"06:00","🚿 起床 · 退房","行李暂存酒店或带到贵阳北站寄存");
+    addItem(it,"06:15","🥡 快捷早餐 · 打包带走","路边早餐摊或六广门毛阿姨糯米饭");
+    addItem(it,"06:45","🚕 打车到贵阳北站","约20min+15min进站安检 · 约30元",{type:"transit"});
+    addItem(it,"07:40","🚄 贵阳北→安顺西","G2969 07:40-08:09 · 29min",{type:"transit",lat:25.993,lng:105.669});
+    addItem(it,"08:09","🚌 安顺西→黄果树景区","大巴约40min",{type:"transit"});
+    addItem(it,"09:15","🌊 黄果树瀑布","大瀑布40min→天星桥1.5h→陡坡塘40min · 带防水罩！",{type:"pin",pinId:"p01",lat:25.993,lng:105.669});
+    addItem(it,"12:30","🍱 景区内简餐","自带干粮或景区外安顺小吃");
+    addItem(it,"13:30","🔴 必须离开景区！","硬性截止时间 · 无论拍没拍完！",{type:"system"});
+    addItem(it,"14:18","🚄 安顺西→贵阳北","D8583 14:18-14:51 · 33min",{type:"transit"});
+    addItem(it,"14:51","🚕 贵阳北→喷水池","取行李 · 约20min",{type:"transit",lat:26.584,lng:106.7105});
+    addItem(it,"15:30","🎁 买特产：酸汤火锅底料！","🧧 大型超市或特产店 · 喷水池国贸/南国花锦 · 约¥30-50",{type:"pin",pinId:"f36",lat:26.5828,lng:106.7117});
+    addItem(it,"16:00","🍲 最后的贵阳美食","丝恋丝娃娃 · 新大新豆米火锅 · 社会牛肉粉 · 安顺牛肉粉馆 · 永笠板筋饭",{type:"system",lat:26.584,lng:106.7105});
+    addItem(it,"17:30","🚕 出发去机场","务必留足时间！",{type:"transit",lat:26.5385,lng:106.8010});
+    addItem(it,"18:00","🛬 到达龙洞堡机场T3","值机安检 · 提前90min",{type:"system",lat:26.5385,lng:106.8010});
+    addItem(it,"21:05","✈️ 起飞回太原","龙洞堡T3→武宿T2 · 👋贵阳再见！",{type:"anchor",anchorId:"a3",lat:26.5385,lng:106.8010});
+  }
+
+  trip.dailyPlans = plans;
+}
+
+// Plan B
+var _backupPlans = null;
+function backupCurrentPlan() { _backupPlans = JSON.parse(JSON.stringify(trip.dailyPlans)); }
+function restoreBackupPlan() { if (_backupPlans) { trip.dailyPlans = _backupPlans; _backupPlans = null; } }
+function deducePlanB(problemPinId, reason) {
+  var pp = findPin(problemPinId); if (!pp) return null;
+  var dates = getDateRange(), affectedDays = [];
+  dates.forEach(function(d) { var p=trip.dailyPlans[d]; if(p&&p.items.some(function(it){return it.pinId===problemPinId;})) affectedDays.push(d); });
+  var alts = (trip.pins||[]).filter(function(p){return p.id!==problemPinId&&p.type!=="food"&&p.type!=="reminder"&&p.city==="贵阳"&&p.available!==false;});
+  alts.sort(function(a,b){return (b.type==="nature"?3:b.type==="culture"?2:1)-(a.type==="nature"?3:a.type==="culture"?2:1);});
+  var results = alts.slice(0,4).map(function(alt,idx){return {score:Math.round(90-idx*12),label:alt.name,plan:JSON.parse(JSON.stringify(trip.dailyPlans)),altId:alt.id,altPin:alt,inCity:true};});
+  return {problem:pp,reason:reason,affectedDays:affectedDays,affectedPins:[],alternatives:results};
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ui.js — 视图渲染
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+var currentDayIdx = 0, currentPlanB = null;
+
+function switchPage(pageId) {
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  document.getElementById(pageId).classList.add('active');
+  ['bar-timeline','bar-planb','bar-settings','bar-food'].forEach(function(id){document.getElementById(id).style.display='none';});
+  if(pageId==='page-timeline')document.getElementById('bar-timeline').style.display='flex';
+  if(pageId==='page-planb')document.getElementById('bar-planb').style.display='flex';
+  if(pageId==='page-settings')document.getElementById('bar-settings').style.display='flex';
+  if(pageId==='page-food')document.getElementById('bar-food').style.display='flex';
+  if(pageId==='page-timeline')renderTimelinePage();
+  if(pageId==='page-planb')renderPlanBPage();
+  if(pageId==='page-settings')renderSettingsPage();
+  if(pageId==='page-food')renderFoodPage();
+}
+
+// ── 时间线页 ──
+function renderTimelinePage() {
+  var dates = getDateRange(); if(dates.length===0)return;
+  var tabHtml = dates.map(function(d,i){
+    var parts=d.split("-").map(Number), label=parts[1]+"/"+parts[2];
+    var active=i===currentDayIdx?' active':'';
+    return '<button class="'+active+'" onclick="selectDay('+i+')">'+label+'</button>';
+  }).join('');
+  document.getElementById('dateTabs').innerHTML = tabHtml;
+  document.getElementById('alertBar').style.display='none';
+  renderDayTimeline(dates[currentDayIdx]);
+}
+function selectDay(idx) { currentDayIdx=idx; renderTimelinePage(); }
+function formatDateLabel(dateStr) {
+  var parts=dateStr.split("-").map(Number), d=new Date(parts[0],parts[1]-1,parts[2]);
+  var wd=['周日','周一','周二','周三','周四','周五','周六'];
+  return (d.getMonth()+1)+'月'+d.getDate()+'日 · '+wd[d.getDay()];
+}
+function buildNavUrl(lat,lng,label) {
+  var isIOS=/iPhone|iPad|iPod/.test(navigator.userAgent);
+  if(isIOS)return'https://maps.apple.com/?ll='+lat+','+lng+'&q='+encodeURIComponent(label);
+  return'https://uri.amap.com/marker?position='+lng+','+lat+'&name='+encodeURIComponent(label)+'&callnative=1';
+}
+
+function renderDayTimeline(dateStr) {
+  var plan=trip.dailyPlans[dateStr], items=plan?plan.items:[];
+  var showCheck=document.getElementById('toggleCheck').classList.contains('on');
+  var html='';
+  if(items.length===0){html='<div class="card"><p style="text-align:center;color:var(--subtext);padding:20px;">这天还没有安排</p></div>';}
+  else{
+    html='<div class="card"><h3>📅 '+formatDateLabel(dateStr)+'</h3>';
+    items.forEach(function(it,i){
+      html+='<div class="tl-item'+(it.done?' done':'')+'">';
+      html+='<div class="tl-time">'+it.time+'</div>';
+      html+='<div class="tl-body">'+it.event;
+      if(it.note)html+='<div class="tl-note">'+it.note+'</div>';
+      html+='</div>';
+      if(it.lat)html+='<a class="nav-pill" style="align-self:center;margin-left:4px;" href="'+buildNavUrl(it.lat,it.lng,it.event)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">📍</a>';
+      if(showCheck)html+='<div class="tl-check'+(it.done?' done':'')+'" onclick="toggleCheck('+i+')"></div>';
+      html+='</div>';
+    });
+    html+='</div>';
+  }
+  document.getElementById('timeline').innerHTML=html;
+}
+function toggleCheck(idx) {
+  var d=getDateRange()[currentDayIdx], plan=trip.dailyPlans[d];
+  if(!plan||!plan.items[idx])return;
+  plan.items[idx].done=!plan.items[idx].done; saveTrip(); renderDayTimeline(d);
+}
+
+// ── Plan B 页 ──
+function renderPlanBPage() {
+  var el=document.getElementById('planbContent');
+  if(!currentPlanB){el.innerHTML='<p style="text-align:center;color:var(--subtext);padding:20px;">这里会在出问题时帮你推演替代方案<br><br><button class="btn-primary" onclick="manualTriggerPlanB()">🔄 模拟触发（黄果树暴雨关闭）</button></p>';return;}
+  var pb=currentPlanB, html='';
+  html+='<div style="background:#FEE2E2;border-radius:10px;padding:12px;margin-bottom:12px;"><strong>🌧️ 触发：'+pb.reason+'</strong></div>';
+  html+='<p style="font-weight:600;margin-bottom:6px;">📋 替代方案</p>';
+  (pb.alternatives||[]).slice(0,3).forEach(function(alt,i){
+    var isRec=i===0;
+    html+='<div class="pb-option'+(isRec?' recommended':'')+'" onclick="selectPlanB('+i+')">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:center;">';
+    html+='<strong>'+(['🥇','🥈','🥉'][i])+' 方案'+(['A','B','C'][i])+'：'+alt.label+'</strong>';
+    html+='<span style="font-size:12px;color:var(--subtext);">匹配度 '+alt.score+'%</span></div>';
+    html+='<div style="text-align:right;margin-top:8px;"><button class="btn-primary" style="font-size:13px;padding:8px 20px;">接受此方案</button></div>';
+    html+='</div>';
+  });
+  html+='<div style="text-align:center;margin-top:16px;"><button class="btn-outline" onclick="regeneratePlanB()">🔄 重新推演</button> <button class="btn-ghost" onclick="cancelPlanB()">← 切回原计划</button></div>';
+  el.innerHTML=html;
+}
+function manualTriggerPlanB(){backupCurrentPlan();currentPlanB=deducePlanB('p01','黄果树暴雨 · 景区关闭');renderPlanBPage();}
+function selectPlanB(idx){if(!currentPlanB||!currentPlanB.alternatives[idx])return;trip.dailyPlans=currentPlanB.alternatives[idx].plan;currentPlanB=null;saveTrip();switchPage('page-timeline');}
+function cancelPlanB(){restoreBackupPlan();currentPlanB=null;saveTrip();switchPage('page-timeline');}
+function regeneratePlanB(){var req=prompt('你想调整什么？');if(!req)return;if(currentPlanB){currentPlanB=deducePlanB(currentPlanB.problem.id,req);renderPlanBPage();}}
+
+// ── 设置页 ──
+function renderSettingsPage() {
+  document.getElementById('prefSort').innerHTML=(trip.preferences||[]).map(function(p,i){return'<div class="sort-item" draggable="true" data-idx="'+i+'"><span>'+p.emoji+' '+p.label+'</span><span class="sort-handle">═══</span></div>';}).join('');
+  var aHtml=(trip.anchors||[]).map(function(a){var cls=a.type==='flight'?'anchor-flight':'anchor-event';return'<div class="anchor-card '+cls+'"><span style="font-size:24px;">'+a.icon+'</span><div style="flex:1;"><strong>'+a.title+'</strong><div style="font-size:12px;color:var(--subtext);">'+(a.datetime||'').slice(0,16).replace('T',' ')+' · '+a.location+'</div></div><span style="font-size:12px;color:var(--subtext);cursor:pointer;" onclick="removeAnchor(\''+a.id+'\')">✕</span></div>';}).join('');
+  document.getElementById('anchorList').innerHTML=aHtml+'<div style="text-align:center;margin-top:8px;"><button class="btn-outline" style="font-size:13px;padding:8px 20px;" onclick="addAnchor()">+ 添加硬约束</button></div>';
+  var pHtml=(trip.pins||[]).slice(0,20).map(function(p){return'<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;"><span>'+(p.type==='nature'?'🌊':p.type==='food'?'🍜':p.type==='culture'?'🏛️':p.type==='reminder'?'🎁':'📸')+' '+p.name+'</span><span style="font-size:11px;color:var(--subtext);">'+p.area+'</span></div>';}).join('');
+  document.getElementById('pinList').innerHTML=pHtml||'<p style="color:var(--subtext);text-align:center;">暂无收藏</p>';
+  document.getElementById('searchAdd').innerHTML='<div class="search-box"><span>🔍</span><input placeholder="搜索地名/店名添加到收藏夹..." id="searchInput" onkeydown="if(event.key===\'Enter\')searchAddPin()"></div><div id="searchResults"></div>';
+}
+function searchAddPin() {
+  var q=(document.getElementById('searchInput').value||'').trim().toLowerCase(); if(!q)return;
+  var results=DEFAULT_PINS.filter(function(p){return p.name.toLowerCase().indexOf(q)>=0||p.area.toLowerCase().indexOf(q)>=0;}).slice(0,6);
+  document.getElementById('searchResults').innerHTML=results.map(function(p){return'<div style="padding:8px;border-bottom:1px solid var(--border);cursor:pointer;font-size:13px;" onclick="addPin(\''+p.id+'\')">'+(p.type==='nature'?'🌊':p.type==='food'?'🍜':p.type==='culture'?'🏛️':'📸')+' <strong>'+p.name+'</strong><span style="font-size:11px;color:var(--subtext);"> · '+p.area+'</span><span style="color:var(--red);float:right;">+ 收藏</span></div>';}).join('');
+}
+function addPin(pinId) {
+  var existing=(trip.pins||[]).find(function(p){return p.id===pinId;});if(existing){alert('已收藏过了');return;}
+  var pin=DEFAULT_PINS.find(function(p){return p.id===pinId;});if(pin){trip.pins.push(Object.assign({},pin));saveTrip();renderSettingsPage();}
+}
+
+// ── 美食页 ──
+var FOOD_AREAS=[
+  {key:"minsheng",name:"民生路 + 正新街",emoji:"🍢",filter:function(f){return f.area.indexOf("民生路")>=0||f.area.indexOf("正新街")>=0;}},
+  {key:"caijia",name:"蔡家街",emoji:"🍜",filter:function(f){return f.area.indexOf("蔡家街")>=0;}},
+  {key:"huguo",name:"护国路",emoji:"🔥",filter:function(f){return f.area.indexOf("护国路")>=0;}},
+  {key:"penshuichi",name:"喷水池 + 太平路 + 国贸",emoji:"🏙️",filter:function(f){return f.area.indexOf("喷水池")>=0||f.area.indexOf("太平路")>=0||f.area.indexOf("国贸")>=0;}},
+  {key:"dananmen",name:"大南门",emoji:"🥢",filter:function(f){return f.area.indexOf("大南门")>=0;}},
+  {key:"shengfu",name:"省府路",emoji:"🍲",filter:function(f){return f.area.indexOf("省府路")>=0;}},
+  {key:"youyi",name:"友谊路 + 虎门巷 + 陕西路",emoji:"🍖",filter:function(f){return f.area.indexOf("友谊路")>=0||f.area.indexOf("虎门巷")>=0||f.area.indexOf("陕西路")>=0;}},
+  {key:"other",name:"其他美食",emoji:"🍳",filter:function(f){return f.area.indexOf("八鸽岩路")>=0||f.area.indexOf("飞山街")>=0||f.area.indexOf("三桥")>=0||f.area.indexOf("云岩区")>=0;}}
+];
+function getFoodPriority(f){return(f.note||"").indexOf("🥇必吃")>=0?1:(f.note||"").indexOf("🥈精选")>=0?2:3;}
+function renderFoodPage(){
+  var foods=(trip.pins||[]).filter(function(p){return p.type==="food"||p.type==="reminder";});
+  if(foods.length===0){document.getElementById("foodByArea").innerHTML='<div class="card"><p style="text-align:center;color:var(--subtext);padding:20px;">暂无美食收藏</p></div>';return;}
+  var html='';
+  FOOD_AREAS.forEach(function(area){
+    var af=foods.filter(area.filter);if(af.length===0)return;
+    af.sort(function(a,b){return getFoodPriority(a)-getFoodPriority(b);});
+    html+='<div class="food-area-card area-anchor" id="area-'+area.key+'"><h3>'+area.emoji+' '+area.name+' <span style="font-size:11px;color:var(--subtext);font-weight:400;">'+af.length+'家</span></h3>';
+    af.forEach(function(f){
+      var url=buildNavUrl(f.lat,f.lng,f.name),pl=getFoodPriority(f)===1?'🥇必吃':getFoodPriority(f)===2?'🥈精选':'🥉备选';
+      if(f.type==='reminder')pl='🎁';
+      var detail=(f.note||'').replace(/🥇必吃[ ·]*|🥈精选[ ·]*|🥉备选[ ·]*/g,'');if(f.price)detail+=(detail?' · ':'')+f.price;
+      html+='<div class="food-row-item"><div style="flex:1;min-width:0;"><div class="food-row-name">'+pl+' '+f.name+'</div><div class="food-row-detail">'+(detail||f.timeHint||'')+'</div></div><a class="nav-pill" href="'+url+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">📍 导航 ↗</a></div>';
+    });
+    html+='</div>';
+  });
+  document.getElementById("foodByArea").innerHTML=html;
+}
+function scrollToArea(key){var el=document.getElementById("area-"+key);if(el)el.scrollIntoView({behavior:"smooth"});}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// app.js — 启动
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function loadTrip() {
+  try{var raw=localStorage.getItem(LS_KEY);if(raw){trip=JSON.parse(raw);return;}}catch(e){}
+  trip={title:"贵阳四日旅行",startDate:"2026-07-02",endDate:"2026-07-05",preferences:JSON.parse(JSON.stringify(DEFAULT_PREFERENCES)),anchors:JSON.parse(JSON.stringify(DEFAULT_ANCHORS)),pins:JSON.parse(JSON.stringify(DEFAULT_PINS)),dailyPlans:{}};
+  generateTimeline(); saveTrip();
+}
+function saveAndRegenerate(){(trip.pins||[]).forEach(function(p){p.used=false;});generateTimeline();saveTrip();switchPage('page-timeline');}
+function removeAnchor(anchorId){trip.anchors=(trip.anchors||[]).filter(function(a){return a.id!==anchorId;});saveTrip();renderSettingsPage();}
+function addAnchor(){var t=prompt('约束名称：'),dt=prompt('日期时间：'),loc=prompt('地点：')||'',note=prompt('备注：')||'';if(!t||!dt)return;trip.anchors.push({id:'a'+Date.now(),type:'event',icon:'📌',title:t,datetime:dt,location:loc,lat:26.58,lng:106.71,note:note});saveTrip();renderSettingsPage();}
+
+(function init(){
+  loadTrip(); switchPage('page-timeline');
+  document.getElementById('prefSort').addEventListener('dragstart',function(e){e.dataTransfer.setData('text/plain',e.target.dataset.idx);});
+  document.getElementById('prefSort').addEventListener('dragover',function(e){e.preventDefault();});
+  document.getElementById('prefSort').addEventListener('drop',function(e){e.preventDefault();var from=parseInt(e.dataTransfer.getData('text/plain')),toEl=e.target.closest('.sort-item');if(!toEl)return;var to=parseInt(toEl.dataset.idx);if(isNaN(from)||isNaN(to)||from===to)return;var m=trip.preferences.splice(from,1)[0];trip.preferences.splice(to,0,m);trip.preferences.forEach(function(p,i){p.weight=i+1;});saveTrip();renderSettingsPage();});
+})();
+</script>
+</body>
+</html>
