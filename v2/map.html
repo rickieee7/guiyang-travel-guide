@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>贵阳四日旅行地图 · 全程地点与轨迹</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+:root { --red:#C41E3A; --blue:#2563EB; --green:#059669; --orange:#D97706; --purple:#7C3AED; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: "PingFang SC","Microsoft YaHei",sans-serif; background:#111; color:#fff; }
+#map { width:100%; height:100vh; }
+.legend { position:fixed; bottom:20px; left:10px; background:rgba(0,0,0,0.8); padding:10px 14px; border-radius:10px; font-size:12px; z-index:1000; line-height:1.8; }
+.legend span { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:4px; }
+.legend .l-red { background:var(--red); }
+.legend .l-orange { background:var(--orange); }
+.legend .l-blue { background:var(--blue); }
+.legend .l-green { background:var(--green); }
+.legend .l-purple { background:var(--purple); }
+.day-toggle { position:fixed; top:10px; right:10px; z-index:1000; display:flex; flex-direction:column; gap:4px; }
+.day-toggle button { background:rgba(0,0,0,0.7); color:#fff; border:1px solid #555; border-radius:6px; padding:6px 10px; font-size:11px; cursor:pointer; }
+.day-toggle button.active { border-color:#fff; font-weight:600; }
+.route-hint { position:fixed; top:10px; left:50%; transform:translateX(-50%); z-index:1000; background:rgba(0,0,0,0.75); padding:6px 16px; border-radius:20px; font-size:12px; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="route-hint">🏙️ 贵阳四日行程 · 点击标记查看详情</div>
+<div class="legend">
+  <div><span class="l-red"></span> 美食 (30家)</div>
+  <div><span class="l-orange"></span> 景点 (8个)</div>
+  <div><span class="l-blue"></span> 住宿 / 出发</div>
+  <div><span class="l-green"></span> 交通节点</div>
+  <div><span class="l-purple"></span> 演唱会</div>
+  <div style="margin-top:2px;border-top:1px solid #444;">━━ 路线轨迹</div>
+</div>
+<div class="day-toggle" id="dayToggle">
+  <button class="active" data-day="all">全部</button>
+  <button data-day="day1">🌙 7/2</button>
+  <button data-day="day2">🌊 7/3</button>
+  <button data-day="day3">🎵 7/4</button>
+  <button data-day="day4">💦 7/5</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ===== 高德瓦片（国内秒开，无需key） =====
+// 多瓦片源自动降级（无需API key）
+var tileSources = [
+  { url:'https://wprd0{s}.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&lang=zh_cn&size=1&scl=1&style=8', sub:['1','2','3','4'] },
+  { url:'https://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineCommunity/MapServer/tile/{z}/{y}/{x}', sub:[] },
+  { url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png', sub:[] }
+];
+var tileIdx = 0;
+
+var map = L.map('map', { zoomControl: true, attributionControl: false }).setView([26.58, 106.71], 13);
+(function loadTile() {
+  var src = tileSources[tileIdx];
+  var opts = { maxZoom: 18 };
+  if (src.sub.length) opts.subdomains = src.sub;
+  var layer = L.tileLayer(src.url, opts).addTo(map);
+  layer.on('tileerror', function() {
+    if (tileIdx < tileSources.length - 1) { tileIdx++; map.eachLayer(function(l) { if (l._url) map.removeLayer(l); }); loadTile(); }
+  });
+})();
+
+// ===== 颜色和图标 =====
+var colors = { food:'#C41E3A', nature:'#D97706', culture:'#D97706', photo:'#D97706',
+  hotel:'#2563EB', prep:'#2563EB', transport:'#059669', venue:'#7C3AED', flight:'#059669' };
+
+function mkIcon(color, size) {
+  return L.divIcon({ html:'<div style="width:'+size+'px;height:'+size+'px;background:'+color+';border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.3);"></div>',
+    className:'', iconSize:[size,size], iconAnchor:[size/2,size/2] });
+}
+
+// ===== 所有点位 =====
+var POINTS = {
+  // 景点
+  huangguoshu:  { lat:25.993, lng:105.669, label:'🌊 黄果树瀑布', type:'nature', day:'day4' },
+  xiaoqikong:   { lat:25.298, lng:107.709, label:'🌊 荔波小七孔', type:'nature', day:'day2' },
+  qianling:     { lat:26.597, lng:106.694, label:'🏞️ 黔灵山公园', type:'culture', day:'day2' },
+  jiaxiulou:    { lat:26.574, lng:106.7155, label:'🏛️ 甲秀楼', type:'culture', day:'day2' },
+  baigong:      { lat:26.566, lng:106.696, label:'🏰 花果园白宫', type:'photo', day:'day3' },
+  yelanggu:     { lat:26.424, lng:106.680, label:'🗿 花溪夜郎谷', type:'culture', day:'day3' },
+  guizhoubo:    { lat:26.620, lng:106.663, label:'🏛️ 贵州省博物馆', type:'culture', day:'day4' },
+  wenchangge:   { lat:26.579, lng:106.718, label:'🏯 文昌阁+电台街', type:'photo', day:'day4' },
+
+  // 住宿/出发
+  zhongbei:     { lat:38.0146, lng:112.4416, label:'🏠 中北大学(出发)', type:'prep', day:'day1' },
+  wuxu:         { lat:37.7543, lng:112.7136, label:'✈️ 太原武宿T1', type:'flight', day:'day1' },
+  penshuichi:   { lat:26.584, lng:106.7105, label:'🏨 喷水池住宿区', type:'hotel', day:'all' },
+
+  // 交通
+  airport:      { lat:26.5385, lng:106.8010, label:'🛬 龙洞堡机场T2/T3', type:'transport', day:'day1' },
+  guiyangbei:   { lat:26.6200, lng:106.6720, label:'🚄 贵阳北站', type:'transport', day:'day2' },
+  aoti:         { lat:26.6200, lng:106.6280, label:'🎤 奥体中心(演唱会)', type:'venue', day:'day3' },
+  liboStation:  { lat:25.410, lng:107.880, label:'🚄 荔波站', type:'transport', day:'day2' },
+  anshunxi:     { lat:26.255, lng:105.946, label:'🚄 安顺西站', type:'transport', day:'day4' },
+
+  // 美食（按片区）
+  f01: { lat:26.5828, lng:106.7132, label:'🍜 徐家优选脆哨', type:'food', day:'day1', area:'民生路' },
+  f02: { lat:26.5826, lng:106.7134, label:'🍜 丁家脆哨', type:'food', day:'day1', area:'民生路' },
+  f03: { lat:26.5823, lng:106.7138, label:'🍜 余孃洋芋粑', type:'food', day:'day1', area:'民生路×正新街' },
+  f04: { lat:26.5816, lng:106.7149, label:'🍜 金牌罗记肠旺面', type:'food', day:'day2', area:'蔡家街' },
+  f05: { lat:26.5820, lng:106.7146, label:'🍜 忆苗乡老酸汤', type:'food', day:'day3', area:'蔡家街' },
+  f06: { lat:26.5748, lng:106.7168, label:'🍜 毛辣果虾酸牛肉', type:'food', day:'day2', area:'护国路' },
+  f07: { lat:26.5746, lng:106.7170, label:'🍜 织金土烙锅', type:'food', day:'day2', area:'护国路' },
+  f08: { lat:26.5752, lng:106.7166, label:'🍜 王旭甜品', type:'food', day:'day2', area:'护国路' },
+  f09: { lat:26.5754, lng:106.7164, label:'🍜 胡子哥酸汤牛肉', type:'food', day:'day2', area:'护国路' },
+  f10: { lat:26.5745, lng:106.7172, label:'🍜 黔渔翁豆花渎鱼', type:'food', day:'day2', area:'护国路' },
+  f11: { lat:26.5835, lng:106.7115, label:'🍜 新大新豆米火锅', type:'food', day:'day4', area:'喷水池' },
+  f12: { lat:26.5853, lng:106.7131, label:'🍜 烧包烧烤店', type:'food', day:'day3', area:'虎门巷' },
+  f13: { lat:26.5812, lng:106.7148, label:'🍜 小平香辣素粉', type:'food', day:'day3', area:'省府路' },
+  f14: { lat:26.5808, lng:106.7152, label:'🍜 老凯里酸汤鱼', type:'food', day:'day3', area:'省府路' },
+  f15: { lat:26.5732, lng:106.7152, label:'🍜 黔诚酸汤牛肉', type:'food', day:'day3', area:'大南门' },
+  f16: { lat:26.5738, lng:106.7148, label:'🍜 林城雷家豆腐圆子', type:'food', day:'day3', area:'大南门' },
+  f17: { lat:26.5862, lng:106.7108, label:'🍜 巴倒烫烤鱼', type:'food', day:'day3', area:'陕西路' },
+  f18: { lat:26.5872, lng:106.7118, label:'🍜 葫芦烤鸡', type:'food', day:'day3', area:'友谊路' },
+  f19: { lat:26.5828, lng:106.7117, label:'🍜 丝恋丝娃娃', type:'food', day:'day4', area:'喷水池国贸' },
+  f20: { lat:26.5918, lng:106.7052, label:'🍜 六广门毛阿姨糯米饭', type:'food', day:'day4', area:'八鸽岩路' },
+  f21: { lat:26.5830, lng:106.7128, label:'🍜 但家香酥鸭', type:'food', day:'day1', area:'民生路' },
+  f22: { lat:26.5827, lng:106.7130, label:'🍜 董家红油米皮', type:'food', day:'day3', area:'民生路' },
+  f23: { lat:26.5822, lng:106.7137, label:'🍜 骆玉冰浆', type:'food', day:'day1', area:'民生路' },
+  f24: { lat:26.5824, lng:106.7136, label:'🍜 俞记安顺破酥包', type:'food', day:'day2', area:'民生路' },
+  f25: { lat:26.5842, lng:106.7103, label:'🍜 社会牛肉粉', type:'food', day:'day4', area:'喷水池' },
+  f26: { lat:26.5751, lng:106.7169, label:'🍜 巧八角冰浆', type:'food', day:'day2', area:'护国路' },
+  f27: { lat:26.5753, lng:106.7165, label:'🍜 小满牛肉粉', type:'food', day:'day2', area:'护国路' },
+  f28: { lat:26.5833, lng:106.7096, label:'🍜 安顺牛肉粉馆', type:'food', day:'day4', area:'太平路' },
+  f29: { lat:26.5836, lng:106.7093, label:'🍜 永笠板筋饭', type:'food', day:'day4', area:'太平路' },
+  f30: { lat:26.5822, lng:106.7063, label:'🍜 飞山街一绝板筋王', type:'food', day:'day4', area:'飞山街' }
+};
+
+// ===== 每日路线（按顺序连线的地点） =====
+var ROUTES = {
+  day1: ['zhongbei','wuxu','airport','penshuichi','f01','f03','f23','f21','f02'],
+  day2: ['penshuichi','f04','f24','guiyangbei','liboStation','xiaoqikong','liboStation','guiyangbei','penshuichi','f06','f07','f08','f26','f09','f10','f27'],
+  day3: ['penshuichi','f05','f22','f13','f14','wenchangge','f15','f16','f08','baigong','yelanggu','aoti','f12','f18','f17'],
+  day4: ['penshuichi','f20','guiyangbei','anshunxi','huangguoshu','anshunxi','guiyangbei','penshuichi','f11','f19','f25','f28','f29','airport']
+};
+
+var routeColors = { day1:'#059669', day2:'#2563EB', day3:'#7C3AED', day4:'#D97706' };
+var allMarkers = {};
+var allLines = [];
+var currentDay = 'all';
+
+// ===== 渲染 =====
+var layerGroups = {};
+['day1','day2','day3','day4'].forEach(function(d) { layerGroups[d] = L.layerGroup().addTo(map); });
+
+// 创建标记
+Object.keys(POINTS).forEach(function(k) {
+  var p = POINTS[k];
+  var color = colors[p.type] || '#888';
+  var size = p.type === 'hotel' ? 14 : p.type === 'transport' ? 12 : p.type === 'venue' ? 13 : p.type.indexOf('food')>=0 ? 9 : 11;
+  var marker = L.circleMarker([p.lat, p.lng], {
+    radius: size, fillColor: color, color: '#fff', weight: p.type==='hotel'?3:2,
+    fillOpacity: 0.9, dashArray: p.type==='hotel'?'4 2':null
+  }).bindPopup('<strong>'+p.label+'</strong><br><span style="font-size:11px;color:#888;">'+(p.area||'')+'</span>');
+
+  allMarkers[k] = marker;
+  marker.addTo(map);
+
+  // 保存 day 关联
+  marker._day = p.day;
+});
+
+// 创建路线
+Object.keys(ROUTES).forEach(function(day) {
+  var pts = ROUTES[day].map(function(k) { return [POINTS[k].lat, POINTS[k].lng]; });
+  var line = L.polyline(pts, { color: routeColors[day], weight: 3, opacity: 0.6, dashArray: '8 4' });
+  line._day = day;
+  line.addTo(map);
+  allLines.push(line);
+});
+
+// 初始化：显示全部
+setTimeout(function() {
+  var allCoords = Object.values(POINTS).map(function(p) { return [p.lat, p.lng]; });
+  // 贵阳集中视图
+  var gyCoords = Object.values(POINTS).filter(function(p) { return p.lat > 26.3 && p.lat < 26.7 && p.lng > 106.6 && p.lng < 106.9; });
+  if (gyCoords.length > 10) {
+    map.fitBounds(gyCoords.map(function(p) { return [p.lat, p.lng]; }), { padding: [20,20] });
+  }
+}, 300);
+
+// ===== 日筛选 =====
+document.getElementById('dayToggle').addEventListener('click', function(e) {
+  var btn = e.target.closest('button');
+  if (!btn) return;
+  document.querySelectorAll('#dayToggle button').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+
+  var day = btn.dataset.day;
+  currentDay = day;
+
+  Object.keys(allMarkers).forEach(function(k) {
+    var m = allMarkers[k];
+    if (day === 'all' || m._day === day || m._day === 'all') {
+      m.setOpacity(1);
+    } else {
+      m.setOpacity(0.15);
+    }
+  });
+
+  allLines.forEach(function(l) {
+    if (day === 'all' || l._day === day) {
+      l.setStyle({ opacity: 0.7, weight: 3 });
+    } else {
+      l.setStyle({ opacity: 0.08, weight: 1 });
+    }
+  });
+});
+</script>
+</body>
+</html>
